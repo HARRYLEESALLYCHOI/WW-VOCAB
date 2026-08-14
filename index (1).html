@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2A3A5C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vocab Master">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<title>Vocab Master</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#2A3A5C; --navy-soft:rgba(42,58,92,0.08); --orange:#E2613C; --cream:#F7F3EA;
+  --card:#FBF8F3; --paper:#FAF7F2; --ink:#2A3A5C; --sub:#5B6B87; --green:#3F8A5F; --red:#C8483A; --purple:#8A6BAE;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%; background:#111; font-family:'Inter',system-ui,sans-serif;}
+a{color:#3D5480;}
+button{font-family:inherit;}
+.serif{font-family:'Zilla Slab',serif;}
+@keyframes screenIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sheetUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+@keyframes growBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+.stage{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; box-sizing:border-box;}
+.phone{width:100%; max-width:402px; height:100vh; max-height:874px; border-radius:36px; overflow:hidden; box-shadow:0 30px 60px rgba(0,0,0,0.35); position:relative; background:var(--cream);}
+@media (min-width:460px){ .phone{ border-radius:44px; } }
+
+.screen{position:absolute; inset:0; display:flex; flex-direction:column; background:var(--cream); animation:screenIn .3s ease;}
+.header{background:var(--navy); padding:28px 24px 22px; display:flex; align-items:center; gap:14px; flex-shrink:0;}
+.header .back{border:none; background:transparent; cursor:pointer; padding:4px; display:flex;}
+.htitle{font-family:'Zilla Slab',serif; font-weight:700; font-size:26px; color:#F8F5F0; line-height:1.1;}
+.hsub{font-size:12.5px; color:rgba(248,245,240,0.65); margin-top:2px;}
+.body{flex:1; overflow:auto; padding:16px 20px 100px;}
+.body.pb0{padding-bottom:20px;}
+
+.row{display:flex; align-items:center; justify-content:space-between; padding:16px 4px; border-bottom:1px solid rgba(42,58,92,0.1); cursor:pointer;}
+.rowtitle{font-family:'Zilla Slab',serif; font-weight:700; font-size:18px; color:var(--navy);}
+.rowsub{font-size:13px; color:var(--sub); margin-top:3px;}
+.chev path{stroke:#5B6B87; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round;}
+
+.pill{border:none; border-radius:100px; cursor:pointer; font-weight:700;}
+.pill-primary{background:var(--orange); color:#FAF7F2; box-shadow:0 10px 24px rgba(226,97,60,0.35);}
+.pill-outline{background:transparent; border:1.5px solid rgba(42,58,92,0.25); color:var(--navy);}
+
+.card{background:var(--card); border-radius:18px; padding:20px; cursor:pointer; box-shadow:0 2px 10px rgba(42,58,92,0.07); margin-bottom:14px;}
+.card.dark{background:var(--navy); box-shadow:0 6px 18px rgba(42,58,92,0.25);}
+.card-title{font-family:'Zilla Slab',serif; font-weight:700; font-size:19px; color:var(--navy);}
+.card.dark .card-title{color:#F8F5F0;}
+.card-desc{font-size:13px; color:var(--sub); margin-top:7px; line-height:1.5;}
+.card.dark .card-desc{color:rgba(248,245,240,0.7);}
+.badge{font-size:11px; font-weight:700; color:var(--orange); background:rgba(226,97,60,0.12); padding:4px 9px; border-radius:100px;}
+.badge.solid{color:#FAF7F2; background:var(--orange);}
+
+.speakbtn{width:32px; height:32px; border-radius:50%; border:none; background:rgba(42,58,92,0.07); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.speakbtn.lg{width:44px; height:44px; background:var(--orange); box-shadow:0 6px 14px rgba(226,97,60,0.32);}
+
+.tabbar{position:absolute; left:0; right:0; bottom:0; height:74px; background:var(--card); border-top:1px solid rgba(42,58,92,0.1); display:flex; align-items:center;}
+.tabbtn{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; border:none; background:transparent; padding:6px 0;}
+.tabbtn .lbl{font-size:10.5px; font-weight:700; letter-spacing:0.4px;}
+
+.modal-back{position:absolute; inset:0; background:rgba(42,58,92,0.5); display:flex; align-items:flex-end; justify-content:center; z-index:20;}
+.modal-back.center{align-items:center; padding:24px;}
+.sheet{width:100%; background:var(--card); border-radius:24px 24px 0 0; padding:24px 24px 40px; box-sizing:border-box; animation:sheetUp .25s ease;}
+.popcard{width:100%; background:var(--card); border-radius:24px; padding:24px 22px 26px; box-sizing:border-box; animation:popIn .22s ease; box-shadow:0 20px 50px rgba(0,0,0,0.3);}
+.grabber{width:36px; height:4px; border-radius:2px; background:rgba(42,58,92,0.2); margin:0 auto 18px;}
+
+input[type=text]{width:100%; box-sizing:border-box; padding:14px 16px; border-radius:12px; border:1px solid rgba(42,58,92,0.2); font-size:16px; font-family:'Inter',sans-serif; color:var(--navy);}
+
+.opt{display:flex; gap:12px; align-items:flex-start; padding:15px 16px; border-radius:14px; cursor:pointer; background:var(--paper); border:1.5px solid rgba(42,58,92,0.13); margin-bottom:10px;}
+.opt .n{font-family:'Zilla Slab',serif; font-weight:700; font-size:14px; color:var(--sub); flex-shrink:0; line-height:1.45;}
+.opt .t{font-size:15px; color:var(--navy); line-height:1.45;}
+.opt.correct{background:rgba(63,138,95,0.12); border-color:var(--green);}
+.opt.correct .n, .opt.correct .t{color:#26603F;}
+.opt.wrong{background:rgba(200,72,58,0.1); border-color:var(--red);}
+.opt.wrong .n, .opt.wrong .t{color:#8E2F24;}
+
+.statbox{flex:1; background:var(--card); border-radius:16px; padding:16px;}
+.statnum{font-family:'Zilla Slab',serif; font-weight:700; font-size:30px; color:var(--navy); line-height:1;}
+.statlbl{font-size:11.5px; color:var(--sub); margin-top:5px; letter-spacing:0.4px;}
+.sectionlbl{font-size:12px; font-weight:700; letter-spacing:0.8px; color:var(--sub); margin:26px 0 14px;}
+
+::-webkit-scrollbar{width:0; height:0;}
+</style>
+</head>
+<body>
+<div class="stage"><div class="phone" id="phone"></div></div>
+
+<script>
+/* ============ DATA ============ */
+const BOOK8 = [
+  { word:'avid', pos:'adj.', pron:'/av\'id/', ko:'매우 열망하는; 열렬한', en:'having a strong desire for something, to the point of greed, or eager and enthusiastic', ex:'Kiara is an avid skateboarder who spends every weekend at the park.', syn:'enthusiastic', lesson:1 },
+  { word:'brusque', pos:'adj.', pron:'/brusk/', ko:'퉁명스러운; 무뚝뚝한', en:'abrupt and blunt in manner or speech', ex:'The coach gave a brusque reply and walked off the field.', syn:'curt', lesson:1 },
+  { word:'concise', pos:'adj.', pron:'/kuhn-sis\'/', ko:'간결한', en:'short and to the point', ex:'Her concise summary covered every key point in two sentences.', syn:'brief', lesson:1 },
+  { word:'demean', pos:'v.', pron:'/di-meen\'/', ko:'품위를 떨어뜨리다; 비하하다', en:'to lower someone\'s self-esteem or reputation', ex:'He refused to demean himself by arguing with the crowd.', syn:'degrade', lesson:1 },
+  { word:'despicable', pos:'adj.', pron:'/des-pik\'uh-bul/', ko:'비열한; 경멸스러운', en:'deserving contempt or scorn', ex:'Stealing from a friend is a despicable thing to do.', syn:'contemptible', lesson:1 },
+  { word:'emulate', pos:'v.', pron:'/em\'yoo-lat/', ko:'본받다; 모방하다', en:'to try to equal by imitation', ex:'Young players often try to emulate their favorite professional athletes.', syn:'imitate', lesson:1 },
+  { word:'evoke', pos:'v.', pron:'/i-vok\'/', ko:'불러일으키다; 유발하다', en:'to call forth or bring to mind', ex:'The old photograph seemed to evoke memories of her childhood home.', syn:'elicit', lesson:1 },
+  { word:'excruciating', pos:'adj.', pron:'/eks-kroo\'shee-a-ting/', ko:'극심하게 고통스러운', en:'extremely painful', ex:'The results turned out to be excruciating beyond what anyone expected.', syn:'agonizing', lesson:1 },
+  { word:'inaugurate', pos:'v.', pron:'/i-nog\'yuh-rat/', ko:'취임시키다; 공식적으로 개시하다', en:'to install in office formally, or to begin officially', ex:'It took real effort for the team to inaugurate through the final week.', syn:'launch', lesson:1 },
+  { word:'pervade', pos:'v.', pron:'/pur-vad\'/', ko:'퍼지다; 가득 차다', en:'to spread throughout something', ex:'A strange calm seemed to pervade the empty hallway.', syn:'permeate', lesson:1 },
+  { word:'proprietor', pos:'n.', pron:'/pruh-pri\'uh-tur/', ko:'소유주; 사업주', en:'an owner of a business', ex:'Her speech opened with a memorable a proprietor.', syn:'owner', lesson:1 },
+  { word:'pseudonym', pos:'n.', pron:'/soo\'duh-nim/', ko:'필명; 가명', en:'a fictitious name used by a writer', ex:'The report described a pseudonym that surprised the readers.', syn:'alias', lesson:1 },
+  { word:'rebuff', pos:'v.', pron:'/ri-buf\'/', ko:'퉁명스럽게 거절하다; 격퇴하다', en:'to reject bluntly', ex:'It took real effort for the team to rebuff through the final week.', syn:'spurn', lesson:1 },
+  { word:'resilient', pos:'adj.', pron:'/ri-zil\'yunt/', ko:'회복력 있는; 탄력 있는', en:'able to recover quickly from hardship', ex:'The critics called the new design surprisingly resilient.', syn:'tough', lesson:1 },
+  { word:'turbulent', pos:'adj.', pron:'/tur\'byuh-lunt/', ko:'혼란스러운; 격동의', en:'chaotic or stormy', ex:'Everyone agreed that his approach was remarkably turbulent.', syn:'chaotic', lesson:1 },
+  { word:'abrasion', pos:'n.', pron:'/uh-bra\'zhun/', ko:'마찰에 의한 마모; 찰과상', en:'a scraped area caused by rubbing', ex:'The report described an abrasion that surprised the readers.', syn:'scrape', lesson:2 },
+  { word:'clad', pos:'adj.', pron:'/klad/', ko:'옷을 입은; 덮인', en:'dressed or covered', ex:'Her explanation was so clad that no one had further questions.', syn:'dressed', lesson:2 },
+  { word:'corroborate', pos:'v.', pron:'/kuh-rob\'uh-rat/', ko:'증거로 뒷받침하다; 확증하다', en:'to support with evidence', ex:'Two separate witnesses managed to corroborate the same story.', syn:'confirm', lesson:2 },
+  { word:'cursory', pos:'adj.', pron:'/kur\'suh-ree/', ko:'서둘러서 대충 하는; 소홀한', en:'hasty and lacking attention to detail', ex:'Everyone agreed that his approach was remarkably cursory.', syn:'hasty', lesson:2 },
+  { word:'dehydrate', pos:'v.', pron:'/dee-hi\'drat/', ko:'수분을 제거하다; 탈수시키다', en:'to remove water from something, or to lose bodily fluids', ex:'The intense heat began to dehydrate the hikers quickly.', syn:'desiccate', lesson:2 },
+  { word:'derive', pos:'v.', pron:'/di-riv\'/', ko:'얻다; 유래하다', en:'to obtain from a source, or to originate', ex:'Much of the town\'s income seemed to derive from tourism.', syn:'stem', lesson:2 },
+  { word:'electrify', pos:'v.', pron:'/i-lek\'truh-fi/', ko:'전기를 연결하다; 짜릿하게 흥분시키다', en:'to wire with electricity, or to thrill', ex:'The final goal seemed to electrify the entire stadium.', syn:'thrill', lesson:2 },
+  { word:'endeavor', pos:'v.', pron:'/en-dev\'ur/', ko:'열심히 노력하다; 시도하다', en:'to make an earnest attempt', ex:'The scientists continued to endeavor toward a lasting cure.', syn:'strive', lesson:2 },
+  { word:'gingerly', pos:'adj.', pron:'/jin\'jur-lee/', ko:'조심스러운; 신중한', en:'very cautious', ex:'The results turned out to be gingerly beyond what anyone expected.', syn:'cautious', lesson:2 },
+  { word:'grimace', pos:'v.', pron:'/grim\'us/', ko:'얼굴을 찡그리다', en:'to twist the face to show pain or disgust', ex:'He could not help but grimace at the bitter taste.', syn:'wince', lesson:2 },
+  { word:'gruesome', pos:'adj.', pron:'/groo\'sum/', ko:'소름 끼치는; 섬뜩한', en:'causing horror; extremely unpleasant', ex:'The critics called the new design surprisingly gruesome.', syn:'grisly', lesson:2 },
+  { word:'inventory', pos:'n.', pron:'/in\'vun-tor-ee/', ko:'물품 목록; 재고', en:'a complete list of goods on hand', ex:'Her speech opened with a memorable an inventory.', syn:'stock', lesson:2 },
+  { word:'simulate', pos:'v.', pron:'/sim\'yuh-lat/', ko:'~인 척하다; 모의 실험하다', en:'to imitate the appearance of something', ex:'Engineers used software to simulate the crash conditions.', syn:'mimic', lesson:2 },
+  { word:'succumb', pos:'v.', pron:'/suh-kum\'/', ko:'굴복하다; 사망하다', en:'to give in, or to die', ex:'Even the strongest players eventually succumb to fatigue late in the match.', syn:'yield', lesson:2 },
+  { word:'surmise', pos:'v.', pron:'/sur-miz\'/', ko:'추측하다; 짐작하다', en:'to guess without full evidence', ex:'Reporters like to surmise strong reactions from their readers.', syn:'guess', lesson:2 },
+  { word:'anonymous', pos:'adj.', pron:'/uh-non\'uh-mus/', ko:'익명의', en:'of unknown or unrevealed source', ex:'Everyone agreed that his approach was remarkably anonymous.', syn:'unnamed', lesson:3 },
+  { word:'anthology', pos:'n.', pron:'/an-thol\'uh-jee/', ko:'선집; 작품 모음집', en:'a collection of writings', ex:'The report described an anthology that surprised the readers.', syn:'collection', lesson:3 },
+  { word:'conjecture', pos:'n.', pron:'/kun-jek\'chur/', ko:'추측; 억측', en:'a guess based on insufficient evidence', ex:'Everyone in the room noticed a conjecture right away.', syn:'speculation', lesson:3 },
+  { word:'disposition', pos:'n.', pron:'/dis-puh-zish\'un/', ko:'기질; 성향', en:'a usual mood or a tendency', ex:'The article focused on a disposition from the town\'s history.', syn:'temperament', lesson:3 },
+  { word:'encompass', pos:'v.', pron:'/en-kum\'pus/', ko:'둘러싸다; 포함하다', en:'to enclose, or to include', ex:'Teachers often encompass students to work harder before exams.', syn:'include', lesson:3 },
+  { word:'extricate', pos:'v.', pron:'/ek\'struh-kat/', ko:'곤경에서 빠져나오게 하다', en:'to free from a difficult situation', ex:'The committee decided to extricate the plan after a long debate.', syn:'disentangle', lesson:3 },
+  { word:'generation', pos:'n.', pron:'/jen-uh-ra\'shun/', ko:'세대; 세대 간 평균 나이 간격', en:'one stage in a family line, or the average span between parent and child', ex:'Everyone in the room noticed a generation right away.', syn:'age group', lesson:3 },
+  { word:'guile', pos:'n.', pron:'/gil/', ko:'교활함; 간계', en:'cunning or deceit', ex:'The article focused on a guile from the town\'s history.', syn:'cunning', lesson:3 },
+  { word:'imperative', pos:'adj.', pron:'/im-per\'uh-tiv/', ko:'긴급한; 명령적인', en:'urgent, or having authority to command', ex:'Everyone agreed that his approach was remarkably imperative.', syn:'urgent', lesson:3 },
+  { word:'instill', pos:'v.', pron:'/in-stil\'/', ko:'서서히 심어주다; 주입시키다', en:'to introduce gradually and establish firmly', ex:'The committee decided to instill the plan after a long debate.', syn:'implant', lesson:3 },
+  { word:'modify', pos:'v.', pron:'/mod\'uh-fi/', ko:'완화하다; 변경하다; 수식하다', en:'to make less extreme, or to change, or to limit meaning in grammar', ex:'It took real effort for the team to modify through the final week.', syn:'adjust', lesson:3 },
+  { word:'pivot', pos:'n.', pron:'/piv\'ut/', ko:'축; 중심인물', en:'a point on which something turns', ex:'The article focused on a pivot from the town\'s history.', syn:'axis', lesson:3 },
+  { word:'prevalent', pos:'adj.', pron:'/prev\'uh-lunt/', ko:'널리 퍼진; 흔한', en:'widely occurring; commonly accepted', ex:'Everyone agreed that his approach was remarkably prevalent.', syn:'widespread', lesson:3 },
+  { word:'recur', pos:'v.', pron:'/ri-kur\'/', ko:'다시 일어나다; 재발하다', en:'to happen again', ex:'The same dream seemed to recur every night that week.', syn:'reoccur', lesson:3 },
+  { word:'spontaneous', pos:'adj.', pron:'/spon-ta\'nee-us/', ko:'자발적인; 자연발생적인', en:'unplanned, or occurring naturally', ex:'Her explanation was so spontaneous that no one had further questions.', syn:'impulsive', lesson:3 },
+  { word:'abhor', pos:'v.', pron:'/ab-hor\'/', ko:'혐오하다; 몹시 싫어하다', en:'to hate intensely', ex:'Most critics seemed to abhor the film\'s ending.', syn:'detest', lesson:4 },
+  { word:'affable', pos:'adj.', pron:'/af\'uh-bul/', ko:'상냥한; 붙임성 있는', en:'pleasant and easy to talk to', ex:'Everyone agreed that his approach was remarkably affable.', syn:'amiable', lesson:4 },
+  { word:'amiss', pos:'adv.', pron:'/uh-mis\'/', ko:'잘못되어; 순서가 어긋난', en:'wrong or out of order', ex:'The old door creaked open, and something felt amiss about it.', syn:'awry', lesson:4 },
+  { word:'despondent', pos:'adj.', pron:'/di-spon\'dunt/', ko:'낙담한; 의기소침한', en:'deeply discouraged; without hope', ex:'Her explanation was so despondent that no one had further questions.', syn:'dejected', lesson:4 },
+  { word:'entreat', pos:'v.', pron:'/en-treet\'/', ko:'간청하다; 애원하다', en:'to ask earnestly; to beg', ex:'Reporters like to entreat strong reactions from their readers.', syn:'implore', lesson:4 },
+  { word:'haunt', pos:'v.', pron:'/hont/', ko:'마음속에 계속 맴돌다; 자주 드나들다', en:'to remain in the mind, to visit often, or to appear as a ghost', ex:'The unanswered question continued to haunt him for years.', syn:'plague', lesson:4 },
+  { word:'impel', pos:'v.', pron:'/im-pel\'/', ko:'몰아가다; 촉구하다', en:'to drive forward, or to urge someone to act', ex:'The committee decided to impel the plan after a long debate.', syn:'compel', lesson:4 },
+  { word:'interminable', pos:'adj.', pron:'/in-tur\'mi-nuh-bul/', ko:'끝없는; 지루하게 계속되는', en:'seemingly endless', ex:'Her explanation was so interminable that no one had further questions.', syn:'endless', lesson:4 },
+  { word:'irascible', pos:'adj.', pron:'/i-ras\'uh-bul/', ko:'화를 잘 내는; 성마른', en:'quick-tempered', ex:'The critics called the new design surprisingly irascible.', syn:'irritable', lesson:4 },
+  { word:'profound', pos:'adj.', pron:'/pruh-fownd\'/', ko:'강렬한; 심오한', en:'deeply felt, or showing great understanding', ex:'Everyone agreed that his approach was remarkably profound.', syn:'deep', lesson:4 },
+  { word:'recluse', pos:'n.', pron:'/rek\'loos/', ko:'은둔자', en:'a person who lives apart from society', ex:'The report described a recluse that surprised the readers.', syn:'hermit', lesson:4 },
+  { word:'reverberate', pos:'v.', pron:'/ri-vur\'buh-rat/', ko:'메아리치다; 울려 퍼지다', en:'to echo or resound', ex:'The explosion seemed to reverberate through the entire valley.', syn:'resound', lesson:4 },
+  { word:'sage', pos:'adj.', pron:'/saj/', ko:'지혜로운; 현명한', en:'wise', ex:'The critics called the new design surprisingly sage.', syn:'wise', lesson:4 },
+  { word:'tirade', pos:'n.', pron:'/ti\'rad/', ko:'장황하고 격렬한 비난', en:'a long, angry speech', ex:'Her speech opened with a memorable a tirade.', syn:'diatribe', lesson:4 },
+  { word:'tremulous', pos:'adj.', pron:'/trem\'yuh-lus/', ko:'떨리는; 겁먹은', en:'shaking, or timid', ex:'The results turned out to be tremulous beyond what anyone expected.', syn:'shaky', lesson:4 },
+  { word:'audacious', pos:'adj.', pron:'/o-da\'shus/', ko:'대담한; 무례한', en:'bold and willing to take risks, or disrespectful', ex:'Her explanation was so audacious that no one had further questions.', syn:'daring', lesson:5 },
+  { word:'confiscate', pos:'v.', pron:'/kon\'fi-skat/', ko:'압수하다; 몰수하다', en:'to seize by authority', ex:'Security had to confiscate the banned items at the gate.', syn:'seize', lesson:5 },
+  { word:'conscientious', pos:'adj.', pron:'/kon-shee-en\'shus/', ko:'철저한; 양심적인', en:'thorough and careful, or honest', ex:'Everyone agreed that his approach was remarkably conscientious.', syn:'diligent', lesson:5 },
+  { word:'depict', pos:'v.', pron:'/di-pikt\'/', ko:'묘사하다; 그려내다', en:'to describe or picture', ex:'The committee decided to depict the plan after a long debate.', syn:'portray', lesson:5 },
+  { word:'embark', pos:'v.', pron:'/em-bark\'/', ko:'탑승하다; 착수하다', en:'to board a ship or plane, or to begin something', ex:'The crew was ready to embark on the long voyage.', syn:'commence', lesson:5 },
+  { word:'inkling', pos:'n.', pron:'/ing\'kling/', ko:'어렴풋한 낌새; 막연한 짐작', en:'a vague idea or slight suspicion', ex:'The article focused on an inkling from the town\'s history.', syn:'hint', lesson:5 },
+  { word:'lackadaisical', pos:'adj.', pron:'/lak-uh-da\'zi-kul/', ko:'열의 없는; 무기력한', en:'lacking enthusiasm; unconcerned', ex:'Everyone agreed that his approach was remarkably lackadaisical.', syn:'listless', lesson:5 },
+  { word:'mutiny', pos:'n.', pron:'/myoot\'n-ee/', ko:'반란; 항명', en:'open rebellion against authority', ex:'The report described a mutiny that surprised the readers.', syn:'revolt', lesson:5 },
+  { word:'pilfer', pos:'v.', pron:'/pil\'fur/', ko:'좀도둑질하다', en:'to steal small amounts repeatedly', ex:'Someone had begun to pilfer supplies from the storage room.', syn:'filch', lesson:5 },
+  { word:'profuse', pos:'adj.', pron:'/pruh-fyoos\'/', ko:'아낌없는; 풍부한', en:'plentiful; given generously', ex:'The critics called the new design surprisingly profuse.', syn:'abundant', lesson:5 },
+  { word:'prudent', pos:'adj.', pron:'/prood\'nt/', ko:'신중한; 분별 있는', en:'wise and careful', ex:'Everyone agreed that his approach was remarkably prudent.', syn:'cautious', lesson:5 },
+  { word:'rankle', pos:'v.', pron:'/rang\'kul/', ko:'계속 화나게 하다', en:'to cause continuing anger or irritation', ex:'The unfair decision continued to rankle the entire team.', syn:'irritate', lesson:5 },
+  { word:'rebuke', pos:'v.', pron:'/ri-byook\'/', ko:'호되게 나무라다; 질책하다', en:'to criticize sharply', ex:'The principal chose not to rebuke the students publicly.', syn:'reprimand', lesson:5 },
+  { word:'serene', pos:'adj.', pron:'/suh-reen\'/', ko:'평온한; 고요한', en:'calm and untroubled', ex:'The critics called the new design surprisingly serene.', syn:'tranquil', lesson:5 },
+  { word:'slovenly', pos:'adj.', pron:'/sluv\'un-lee/', ko:'단정치 못한; 대충하는', en:'untidy; careless', ex:'Everyone agreed that his approach was remarkably slovenly.', syn:'untidy', lesson:5 },
+  { word:'anarchy', pos:'n.', pron:'/an\'ur-kee/', ko:'무정부 상태; 대혼란', en:'absence of government, or total confusion', ex:'The report described an anarchy that surprised the readers.', syn:'chaos', lesson:6 },
+  { word:'apprehend', pos:'v.', pron:'/ap-ri-hend\'/', ko:'체포하다; 이해하다', en:'to arrest, or to grasp the meaning of', ex:'Police managed to apprehend the suspect within the hour.', syn:'arrest', lesson:6 },
+  { word:'arraign', pos:'v.', pron:'/uh-ran\'/', ko:'기소하다; 법정에 세우다', en:'to bring before a court to face charges', ex:'The court moved quickly to arraign the defendant.', syn:'indict', lesson:6 },
+  { word:'assimilate', pos:'v.', pron:'/uh-sim\'uh-lat/', ko:'동화되다; 완전히 이해하다', en:'to absorb into a group, or to fully understand', ex:'The new employees managed to assimilate into the team quickly.', syn:'absorb', lesson:6 },
+  { word:'bizarre', pos:'adj.', pron:'/bi-zar\'/', ko:'기괴한; 매우 별난', en:'strikingly odd', ex:'The results turned out to be bizarre beyond what anyone expected.', syn:'weird', lesson:6 },
+  { word:'calamity', pos:'n.', pron:'/kuh-lam\'uh-tee/', ko:'대재앙; 참사', en:'an event causing great harm; a disaster', ex:'Everyone in the room noticed a calamity right away.', syn:'disaster', lesson:6 },
+  { word:'conspire', pos:'v.', pron:'/kun-spir\'/', ko:'공모하다; 합쳐서 작용하다', en:'to plan secretly with others, or to act together by chance', ex:'Bad weather and delays seemed to conspire against the launch.', syn:'plot', lesson:6 },
+  { word:'dissension', pos:'n.', pron:'/di-sen\'shun/', ko:'의견 충돌; 불화', en:'disagreement of opinion', ex:'Her speech opened with a memorable a dissension.', syn:'discord', lesson:6 },
+  { word:'elapse', pos:'v.', pron:'/i-laps\'/', ko:'시간이 경과하다', en:'to pass by, of time', ex:'Several years had to elapse before the town fully recovered.', syn:'pass', lesson:6 },
+  { word:'imminent', pos:'adj.', pron:'/im\'uh-nunt/', ko:'임박한; 곧 닥칠', en:'about to happen', ex:'Her explanation was so imminent that no one had further questions.', syn:'impending', lesson:6 },
+  { word:'interrogate', pos:'v.', pron:'/in-ter\'uh-gat/', ko:'심문하다; 캐묻다', en:'to question closely', ex:'Detectives began to interrogate the witness the next morning.', syn:'question', lesson:6 },
+  { word:'lionize', pos:'v.', pron:'/li\'uh-niz/', ko:'유명 인사로 떠받들다', en:'to treat as a celebrity', ex:'Fans were quick to lionize the young pitcher after one game.', syn:'idolize', lesson:6 },
+  { word:'meticulous', pos:'adj.', pron:'/muh-tik\'yuh-lus/', ko:'매우 꼼꼼한; 세심한', en:'extremely careful about details', ex:'The results turned out to be meticulous beyond what anyone expected.', syn:'thorough', lesson:6 },
+  { word:'shackle', pos:'n.', pron:'/shak\'ul/', ko:'족쇄; 구속', en:'a restraint that prevents free action', ex:'Everyone in the room noticed a shackle right away.', syn:'restraint', lesson:6 },
+  { word:'swelter', pos:'v.', pron:'/swel\'tur/', ko:'더위에 시달리다', en:'to suffer from great heat', ex:'Workers had to swelter through the hottest week of the summer.', syn:'roast', lesson:6 },
+  { word:'claustrophobia', pos:'n.', pron:'/klo-struh-fo\'bee-uh/', ko:'폐소공포증', en:'an abnormal fear of enclosed spaces', ex:'Her speech opened with a memorable a claustrophobia.', syn:'confinement fear', lesson:7 },
+  { word:'colleague', pos:'n.', pron:'/kol\'eeg/', ko:'동료', en:'a fellow worker of similar rank', ex:'The report described a colleague that surprised the readers.', syn:'coworker', lesson:7 },
+  { word:'condescend', pos:'v.', pron:'/kon-di-send\'/', ko:'자신을 낮추다; 거만하게 행동하다', en:'to lower oneself, or to act in a superior manner', ex:'He refused to condescend to the younger staff during meetings.', syn:'patronize', lesson:7 },
+  { word:'contingent', pos:'adj.', pron:'/kun-tin\'junt/', ko:'조건부의; 일어날 수도 있는', en:'conditional, or likely but not certain', ex:'The critics called the new design surprisingly contingent.', syn:'conditional', lesson:7 },
+  { word:'daunt', pos:'v.', pron:'/dont/', ko:'낙담시키다; 겁먹게 하다', en:'to discourage or intimidate', ex:'The size of the project did not daunt the new manager.', syn:'intimidate', lesson:7 },
+  { word:'deluge', pos:'n.', pron:'/del\'yooj/', ko:'폭우; 쇄도', en:'a great flood, or an overwhelming rush of something', ex:'The report described a deluge that surprised the readers.', syn:'flood', lesson:7 },
+  { word:'dispel', pos:'v.', pron:'/di-spel\'/', ko:'떨쳐버리다; 없애다', en:'to clear away, as if by scattering', ex:'New evidence helped dispel the rumors quickly.', syn:'banish', lesson:7 },
+  { word:'dub', pos:'v.', pron:'/dub/', ko:'별명을 붙이다', en:'to give a title or nickname', ex:'Reporters like to dub strong reactions from their readers.', syn:'nickname', lesson:7 },
+  { word:'fanfare', pos:'n.', pron:'/fan\'far/', ko:'팡파르; 요란한 겉치레', en:'a showy sounding of trumpets, or any showy display', ex:'Her speech opened with a memorable a fanfare.', syn:'flourish', lesson:7 },
+  { word:'fledgling', pos:'n.', pron:'/flej\'ling/', ko:'갓 날기 시작한 어린 새; 초보자', en:'a young inexperienced bird or person', ex:'The report described a fledgling that surprised the readers.', syn:'novice', lesson:7 },
+  { word:'inane', pos:'adj.', pron:'/i-nan\'/', ko:'공허한; 어리석고 얄팍한', en:'silly and empty of meaning', ex:'Her explanation was so inane that no one had further questions.', syn:'silly', lesson:7 },
+  { word:'mettle', pos:'n.', pron:'/met\'l/', ko:'기개; 근성', en:'courage to face hardship', ex:'The article focused on a mettle from the town\'s history.', syn:'courage', lesson:7 },
+  { word:'negligible', pos:'adj.', pron:'/neg\'li-juh-bul/', ko:'무시해도 될 만큼 사소한', en:'too small to matter', ex:'Everyone agreed that his approach was remarkably negligible.', syn:'insignificant', lesson:7 },
+  { word:'protract', pos:'v.', pron:'/pro-trakt\'/', ko:'시간을 질질 끌다', en:'to draw out in time; to lengthen', ex:'Endless objections continued to protract the meeting.', syn:'prolong', lesson:7 },
+  { word:'replica', pos:'n.', pron:'/rep\'li-kuh/', ko:'복제품; 축소 모형', en:'a copy, especially a smaller-scale one', ex:'Everyone in the room noticed a replica right away.', syn:'copy', lesson:7 },
+  { word:'adept', pos:'adj.', pron:'/uh-dept\'/', ko:'능숙한; 숙련된', en:'highly skilled', ex:'The critics called the new design surprisingly adept.', syn:'skilled', lesson:8 },
+  { word:'audible', pos:'adj.', pron:'/o\'duh-bul/', ko:'들을 수 있는', en:'capable of being heard', ex:'Everyone agreed that his approach was remarkably audible.', syn:'hearable', lesson:8 },
+  { word:'azure', pos:'n.', pron:'/azh\'ur/', ko:'하늘색', en:'the blue of a cloudless sky', ex:'The report described an azure that surprised the readers.', syn:'sky-blue', lesson:8 },
+  { word:'banter', pos:'v.', pron:'/ban\'tur/', ko:'장난스럽게 농담을 주고받다', en:'to exchange playful, teasing remarks', ex:'It took real effort for the team to banter through the final week.', syn:'tease', lesson:8 },
+  { word:'capacious', pos:'adj.', pron:'/kuh-pa\'shus/', ko:'널찍한', en:'able to hold a large amount; roomy', ex:'The critics called the new design surprisingly capacious.', syn:'roomy', lesson:8 },
+  { word:'copious', pos:'adj.', pron:'/ko\'pee-us/', ko:'풍부한; 다량의', en:'abundant in quantity', ex:'Everyone agreed that his approach was remarkably copious.', syn:'plentiful', lesson:8 },
+  { word:'crucial', pos:'adj.', pron:'/kroo\'shul/', ko:'매우 중요한; 결정적인', en:'extremely important', ex:'The results turned out to be crucial beyond what anyone expected.', syn:'critical', lesson:8 },
+  { word:'decelerate', pos:'v.', pron:'/dee-sel\'uh-rat/', ko:'속도를 늦추다', en:'to slow down', ex:'The driver began to decelerate as the light turned yellow.', syn:'slow', lesson:8 },
+  { word:'deploy', pos:'v.', pron:'/di-ploi\'/', ko:'배치하다; 투입하다', en:'to arrange in position, or to put into use', ex:'Officials moved quickly to deploy extra buses downtown.', syn:'position', lesson:8 },
+  { word:'facilitate', pos:'v.', pron:'/fuh-sil\'uh-tat/', ko:'용이하게 하다; 촉진하다', en:'to make easier', ex:'A good moderator can facilitate a much smoother discussion.', syn:'ease', lesson:8 },
+  { word:'fastidious', pos:'adj.', pron:'/fa-stid\'ee-us/', ko:'세심한; 까다로운', en:'extremely attentive to detail, or hard to please', ex:'The results turned out to be fastidious beyond what anyone expected.', syn:'finicky', lesson:8 },
+  { word:'fitful', pos:'adj.', pron:'/fit\'ful/', ko:'불규칙한', en:'not steady; irregular', ex:'Her explanation was so fitful that no one had further questions.', syn:'irregular', lesson:8 },
+  { word:'grapple', pos:'v.', pron:'/grap\'ul/', ko:'몸싸움하다; 씨름하다', en:'to struggle in close combat, or to come to grips with a problem', ex:'The new manager had to grapple with a shrinking budget.', syn:'wrestle', lesson:8 },
+  { word:'pang', pos:'n.', pron:'/pang/', ko:'갑작스러운 통증', en:'a sudden sharp feeling of pain or distress', ex:'Her speech opened with a memorable a pang.', syn:'twinge', lesson:8 },
+  { word:'precede', pos:'v.', pron:'/pri-seed\'/', ko:'~보다 먼저 오다', en:'to come before in time or order', ex:'A short introduction would precede the main presentation.', syn:'forerun', lesson:8 },
+  { word:'abet', pos:'v.', pron:'/uh-bet\'/', ko:'부추기다; 방조하다', en:'to encourage or assist in wrongdoing', ex:'No one wanted to abet the plan once they heard the details.', syn:'aid', lesson:9 },
+  { word:'agile', pos:'adj.', pron:'/aj\'ul/', ko:'민첩한', en:'able to move quickly and easily', ex:'The critics called the new design surprisingly agile.', syn:'nimble', lesson:9 },
+  { word:'allot', pos:'v.', pron:'/uh-lot\'/', ko:'할당하다; 배분하다', en:'to assign or distribute a portion', ex:'Organizers had to allot extra time for the final round.', syn:'allocate', lesson:9 },
+  { word:'balmy', pos:'adj.', pron:'/bahm\'ee/', ko:'온화한; 포근한', en:'mild and soothing, of weather', ex:'The results turned out to be balmy beyond what anyone expected.', syn:'mild', lesson:9 },
+  { word:'congregate', pos:'v.', pron:'/kong\'gruh-gat/', ko:'모이다; 집결하다', en:'to come together in a group', ex:'Fans began to congregate outside the stadium hours early.', syn:'gather', lesson:9 },
+  { word:'divert', pos:'v.', pron:'/duh-vurt\'/', ko:'방향을 돌리다; 즐겁게 하다', en:'to turn aside, or to amuse', ex:'Officials had to divert traffic around the flooded street.', syn:'redirect', lesson:9 },
+  { word:'humdrum', pos:'adj.', pron:'/hum\'drum/', ko:'지루한; 단조로운', en:'lacking excitement; monotonous', ex:'Everyone agreed that his approach was remarkably humdrum.', syn:'monotonous', lesson:9 },
+  { word:'influx', pos:'n.', pron:'/in\'fluks/', ko:'유입; 몰려듦', en:'an arrival of large numbers of something', ex:'The report described an influx that surprised the readers.', syn:'inflow', lesson:9 },
+  { word:'intricate', pos:'adj.', pron:'/in\'tri-kit/', ko:'복잡한; 정교한', en:'having many complicated parts', ex:'Her explanation was so intricate that no one had further questions.', syn:'complex', lesson:9 },
+  { word:'memento', pos:'n.', pron:'/muh-men\'to/', ko:'기념품', en:'something kept as a reminder of a past event', ex:'The article focused on a memento from the town\'s history.', syn:'keepsake', lesson:9 },
+  { word:'query', pos:'n.', pron:'/kwir\'ee/', ko:'질문', en:'a question', ex:'Her speech opened with a memorable a query.', syn:'question', lesson:9 },
+  { word:'sporadic', pos:'adj.', pron:'/spuh-rad\'ik/', ko:'산발적인', en:'happening occasionally; not regular', ex:'The results turned out to be sporadic beyond what anyone expected.', syn:'occasional', lesson:9 },
+  { word:'staple', pos:'n.', pron:'/sta\'pul/', ko:'기본 식료품; 스테이플러 심', en:'a basic food, or a U-shaped fastener', ex:'Everyone in the room noticed a staple right away.', syn:'basic', lesson:9 },
+  { word:'tumult', pos:'n.', pron:'/too\'mult/', ko:'소란; 소동', en:'noisy excitement; an uproar', ex:'The article focused on a tumult from the town\'s history.', syn:'uproar', lesson:9 },
+  { word:'unseemly', pos:'adj.', pron:'/un-seem\'lee/', ko:'부적절한; 볼썽사나운', en:'not suitable; improper', ex:'Everyone agreed that his approach was remarkably unseemly.', syn:'improper', lesson:9 },
+  { word:'abject', pos:'adj.', pron:'/ab\'jekt/', ko:'비참한', en:'miserable and wretched', ex:'The results turned out to be abject beyond what anyone expected.', syn:'wretched', lesson:10 },
+  { word:'advocate', pos:'v.', pron:'/ad\'vuh-kat/', ko:'지지하다; 옹호하다', en:'to plead in favor of; to defend a cause', ex:'It took real effort for the team to advocate through the final week.', syn:'support', lesson:10 },
+  { word:'atrocity', pos:'n.', pron:'/uh-tros\'uh-tee/', ko:'잔혹 행위; 만행', en:'an act of great cruelty and wickedness', ex:'The article focused on an atrocity from the town\'s history.', syn:'outrage', lesson:10 },
+  { word:'commemorate', pos:'v.', pron:'/kuh-mem\'uh-rat/', ko:'기념하다; 추모하다', en:'to serve as a memorial to; to honor the memory of', ex:'The city planned a ceremony to commemorate the anniversary.', syn:'honor', lesson:10 },
+  { word:'dialect', pos:'n.', pron:'/di\'uh-lekt/', ko:'방언; 사투리', en:'a regional form of a language', ex:'The report described a dialect that surprised the readers.', syn:'vernacular', lesson:10 },
+  { word:'dire', pos:'adj.', pron:'/dir/', ko:'심각한; 절박한', en:'having terrible consequences; urgent', ex:'Her explanation was so dire that no one had further questions.', syn:'grave', lesson:10 },
+  { word:'elite', pos:'n.', pron:'/i-leet\'/', ko:'엘리트; 특권층', en:'a group considered superior to others', ex:'The article focused on an elite from the town\'s history.', syn:'upper class', lesson:10 },
+  { word:'enhance', pos:'v.', pron:'/en-hans\'/', ko:'향상시키다', en:'to make greater or better', ex:'New lighting helped enhance the mood of the entire room.', syn:'improve', lesson:10 },
+  { word:'flagrant', pos:'adj.', pron:'/fla\'grunt/', ko:'노골적인', en:'clearly offensive or bad; obvious', ex:'The results turned out to be flagrant beyond what anyone expected.', syn:'blatant', lesson:10 },
+  { word:'languish', pos:'v.', pron:'/lang\'gwish/', ko:'기력을 잃다; 쇠약해지다', en:'to lose hope, strength, or vitality', ex:'The proposal continued to languish in committee for months.', syn:'wither', lesson:10 },
+  { word:'mute', pos:'adj.', pron:'/myoot/', ko:'말을 하지 않는; 소리를 줄이다', en:'not speaking, or to soften a sound', ex:'The critics called the new design surprisingly mute.', syn:'silent', lesson:10 },
+  { word:'raze', pos:'v.', pron:'/raz/', ko:'완전히 무너뜨리다', en:'to level to the ground; to destroy completely', ex:'Crews were hired to raze the abandoned factory downtown.', syn:'demolish', lesson:10 },
+  { word:'reprisal', pos:'n.', pron:'/ri-pri\'zul/', ko:'보복; 앙갚음', en:'retaliation for an injury', ex:'The report described a reprisal that surprised the readers.', syn:'retaliation', lesson:10 },
+  { word:'turmoil', pos:'n.', pron:'/tur\'moil/', ko:'혼란; 소란', en:'a state of confusion or agitation', ex:'Everyone in the room noticed a turmoil right away.', syn:'chaos', lesson:10 },
+  { word:'wreak', pos:'v.', pron:'/reek/', ko:'가하다; 표출하다', en:'to bring about or inflict, or to express strongly', ex:'Reporters like to wreak strong reactions from their readers.', syn:'inflict', lesson:10 },
+  { word:'augment', pos:'v.', pron:'/og-ment\'/', ko:'늘리다; 증가시키다', en:'to increase in size, amount, or degree', ex:'The company hired more staff to augment its weekend crew.', syn:'increase', lesson:11 },
+  { word:'benign', pos:'adj.', pron:'/bi-nin\'/', ko:'친절한; 위협적이지 않은', en:'kind and gentle, or not threatening', ex:'The results turned out to be benign beyond what anyone expected.', syn:'harmless', lesson:11 },
+  { word:'connoisseur', pos:'n.', pron:'/kon-uh-sur\'/', ko:'감식가; 전문 애호가', en:'a person with expert knowledge, especially of the arts', ex:'Everyone in the room noticed a connoisseur right away.', syn:'expert', lesson:11 },
+  { word:'discern', pos:'v.', pron:'/di-surn\'/', ko:'식별하다; 이해하다; 구별하다', en:'to detect with the eyes, or to understand, or to distinguish', ex:'Reporters like to discern strong reactions from their readers.', syn:'perceive', lesson:11 },
+  { word:'embellish', pos:'v.', pron:'/em-bel\'ish/', ko:'장식하다; 각색하다', en:'to decorate, or to add fictitious details to a story', ex:'He liked to embellish his stories a little for effect.', syn:'adorn', lesson:11 },
+  { word:'execute', pos:'v.', pron:'/ek\'suh-kyoot/', ko:'수행하다; 제작하다; 처형하다', en:'to carry out, to create, or to put to death legally', ex:'The team managed to execute the plan without a single error.', syn:'perform', lesson:11 },
+  { word:'exemplify', pos:'v.', pron:'/ig-zem\'pluh-fi/', ko:'전형적인 예가 되다', en:'to illustrate by being a typical example', ex:'Her quiet leadership seemed to exemplify the team\'s spirit.', syn:'illustrate', lesson:11 },
+  { word:'grotesque', pos:'adj.', pron:'/gro-tesk\'/', ko:'기괴한; 흉측한', en:'strange or ugly in an unsettling way', ex:'The critics called the new design surprisingly grotesque.', syn:'bizarre', lesson:11 },
+  { word:'hallowed', pos:'adj.', pron:'/hal\'od/', ko:'신성한; 존경받는', en:'regarded as holy; greatly respected', ex:'Everyone agreed that his approach was remarkably hallowed.', syn:'sacred', lesson:11 },
+  { word:'impersonate', pos:'v.', pron:'/im-pur\'suh-nat/', ko:'사칭하다; 흉내 내다', en:'to pretend to be someone else, or to imitate', ex:'The actor was hired to impersonate a famous historical figure.', syn:'mimic', lesson:11 },
+  { word:'malevolent', pos:'adj.', pron:'/muh-lev\'uh-lunt/', ko:'악의적인', en:'wishing harm to others', ex:'Her explanation was so malevolent that no one had further questions.', syn:'malicious', lesson:11 },
+  { word:'ornate', pos:'adj.', pron:'/or-nat\'/', ko:'화려하게 장식된', en:'heavily and elaborately decorated', ex:'The critics called the new design surprisingly ornate.', syn:'elaborate', lesson:11 },
+  { word:'pastoral', pos:'adj.', pron:'/pas\'tur-ul/', ko:'목가적인; 전원적인', en:'relating to shepherds or the idealized countryside', ex:'Everyone agreed that his approach was remarkably pastoral.', syn:'rural', lesson:11 },
+  { word:'precarious', pos:'adj.', pron:'/pri-kair\'ee-us/', ko:'불안정한; 위태로운', en:'not safe or stable; dangerously uncertain', ex:'The results turned out to be precarious beyond what anyone expected.', syn:'unstable', lesson:11 },
+  { word:'renown', pos:'n.', pron:'/ri-nown\'/', ko:'명성', en:'fame; honor', ex:'Everyone in the room noticed a renown right away.', syn:'fame', lesson:11 },
+  { word:'accede', pos:'v.', pron:'/ak-seed\'/', ko:'동의하다; 승낙하다', en:'to agree to, often after urging', ex:'After much pressure, the board finally chose to accede to the request.', syn:'consent', lesson:12 },
+  { word:'affluent', pos:'adj.', pron:'/af\'loo-unt/', ko:'부유한', en:'having a great deal of wealth', ex:'Everyone agreed that his approach was remarkably affluent.', syn:'wealthy', lesson:12 },
+  { word:'arbitrary', pos:'adj.', pron:'/ar\'buh-trair-ee/', ko:'임의적인; 자의적인', en:'decided by chance or whim rather than reason', ex:'The results turned out to be arbitrary beyond what anyone expected.', syn:'random', lesson:12 },
+  { word:'artisan', pos:'n.', pron:'/ar\'tuh-zun/', ko:'장인', en:'a skilled worker who makes things by hand', ex:'Everyone in the room noticed an artisan right away.', syn:'craftsman', lesson:12 },
+  { word:'dismantle', pos:'v.', pron:'/dis-man\'tul/', ko:'분해하다; 해체하다', en:'to take apart', ex:'Workers began to dismantle the old bridge piece by piece.', syn:'disassemble', lesson:12 },
+  { word:'immerse', pos:'v.', pron:'/i-murs\'/', ko:'담그다; 몰두하게 하다', en:'to submerge in liquid, or to become deeply engaged', ex:'Students were encouraged to immerse themselves in the language.', syn:'submerge', lesson:12 },
+  { word:'irksome', pos:'adj.', pron:'/urk\'sum/', ko:'성가신; 지루한', en:'annoying; tedious', ex:'The results turned out to be irksome beyond what anyone expected.', syn:'annoying', lesson:12 },
+  { word:'legacy', pos:'n.', pron:'/leg\'uh-see/', ko:'유산', en:'money or property left in a will, or anything handed down', ex:'Everyone in the room noticed a legacy right away.', syn:'inheritance', lesson:12 },
+  { word:'ostentatious', pos:'adj.', pron:'/os-ten-ta\'shus/', ko:'과시적인', en:'showy in a way meant to impress others', ex:'The critics called the new design surprisingly ostentatious.', syn:'showy', lesson:12 },
+  { word:'panorama', pos:'n.', pron:'/pan-uh-ram\'uh/', ko:'전경; 개관', en:'a complete view of a wide area, or a thorough presentation', ex:'Her speech opened with a memorable a panorama.', syn:'vista', lesson:12 },
+  { word:'philanthropy', pos:'n.', pron:'/fuh-lan\'thruh-pee/', ko:'자선 활동; 박애', en:'the effort to improve the well-being of others through giving', ex:'The report described a philanthropy that surprised the readers.', syn:'charity', lesson:12 },
+  { word:'prestige', pos:'n.', pron:'/pre-steezh\'/', ko:'명망; 위신', en:'high standing; respect earned by achievement', ex:'Everyone in the room noticed a prestige right away.', syn:'status', lesson:12 },
+  { word:'prolific', pos:'adj.', pron:'/pro-lif\'ik/', ko:'다작하는', en:'abundantly productive', ex:'The critics called the new design surprisingly prolific.', syn:'productive', lesson:12 },
+  { word:'reticent', pos:'adj.', pron:'/ret\'uh-sunt/', ko:'과묵한', en:'inclined to keep thoughts and feelings to oneself', ex:'Everyone agreed that his approach was remarkably reticent.', syn:'reserved', lesson:12 },
+  { word:'tycoon', pos:'n.', pron:'/ti-koon\'/', ko:'거물 사업가', en:'a wealthy and powerful businessperson', ex:'The report described a tycoon that surprised the readers.', syn:'magnate', lesson:12 },
+  { word:'ardent', pos:'adj.', pron:'/ar\'dunt/', ko:'열렬한', en:'intensely eager; passionate', ex:'Her explanation was so ardent that no one had further questions.', syn:'passionate', lesson:13 },
+  { word:'assail', pos:'v.', pron:'/uh-sal\'/', ko:'맹렬히 공격하다; 괴롭히다', en:'to attack violently or verbally, or to trouble the mind', ex:'Reporters like to assail strong reactions from their readers.', syn:'attack', lesson:13 },
+  { word:'asset', pos:'n.', pron:'/as\'et/', ko:'자산; 강점', en:'anything owned of value, or a quality used to advantage', ex:'Her speech opened with a memorable an asset.', syn:'resource', lesson:13 },
+  { word:'barter', pos:'v.', pron:'/bar\'tur/', ko:'물물교환하다', en:'to exchange goods or services without using money', ex:'The committee decided to barter the plan after a long debate.', syn:'trade', lesson:13 },
+  { word:'bonanza', pos:'n.', pron:'/buh-nan\'zuh/', ko:'노다지; 뜻밖의 큰 수확', en:'a source of great wealth or sudden riches', ex:'Everyone in the room noticed a bonanza right away.', syn:'windfall', lesson:13 },
+  { word:'contagious', pos:'adj.', pron:'/kun-ta\'jus/', ko:'전염성의', en:'able to pass easily from one person to another', ex:'The critics called the new design surprisingly contagious.', syn:'infectious', lesson:13 },
+  { word:'contemplate', pos:'v.', pron:'/kon\'tum-plat/', ko:'심사숙고하다; 고려하다', en:'to think carefully about, or to intend', ex:'She paused to contemplate her next move carefully.', syn:'ponder', lesson:13 },
+  { word:'deter', pos:'v.', pron:'/di-tur\'/', ko:'단념시키다; 막다', en:'to discourage or prevent from acting', ex:'Nothing seemed to deter him from finishing the marathon.', syn:'discourage', lesson:13 },
+  { word:'flair', pos:'n.', pron:'/flair/', ko:'타고난 재능', en:'a natural talent or ability', ex:'Everyone in the room noticed a flair right away.', syn:'talent', lesson:13 },
+  { word:'forfeit', pos:'v.', pron:'/for\'fit/', ko:'몰수당하다; 상실하다', en:'to lose or give up as a result of a fault', ex:'The team had to forfeit the match after arriving late.', syn:'lose', lesson:13 },
+  { word:'innovation', pos:'n.', pron:'/in-uh-va\'shun/', ko:'혁신', en:'a new way of doing something', ex:'Her speech opened with a memorable an innovation.', syn:'novelty', lesson:13 },
+  { word:'mania', pos:'n.', pron:'/ma\'nee-uh/', ko:'열광', en:'an intense enthusiasm or excitement', ex:'The report described a mania that surprised the readers.', syn:'craze', lesson:13 },
+  { word:'stymie', pos:'v.', pron:'/sti\'mee/', ko:'방해하다; 좌절시키다', en:'to block or thwart progress', ex:'Bad weather managed to stymie their plans for the weekend.', syn:'thwart', lesson:13 },
+  { word:'synonymous', pos:'adj.', pron:'/si-non\'uh-mus/', ko:'동의어인; 밀접히 관련된', en:'alike or closely related in meaning', ex:'The critics called the new design surprisingly synonymous.', syn:'equivalent', lesson:13 },
+  { word:'wrangle', pos:'v.', pron:'/rang\'gul/', ko:'시끄럽게 다투다', en:'to quarrel in a noisy way', ex:'The two lawyers continued to wrangle over the contract terms.', syn:'squabble', lesson:13 },
+  { word:'congenial', pos:'adj.', pron:'/kun-jeen\'yul/', ko:'붙임성 있는; 마음에 맞는', en:'getting along well with others, or suited to personal taste', ex:'The results turned out to be congenial beyond what anyone expected.', syn:'friendly', lesson:14 },
+  { word:'decipher', pos:'v.', pron:'/di-si\'fur/', ko:'암호를 해독하다; 이해하다', en:'to convert a code into ordinary language, or to interpret something puzzling', ex:'It took hours to decipher the old handwritten letter.', syn:'decode', lesson:14 },
+  { word:'dissect', pos:'v.', pron:'/di-sekt\'/', ko:'해부하다; 세밀히 분석하다', en:'to cut apart to study, or to analyze closely', ex:'Students were asked to dissect the argument line by line.', syn:'analyze', lesson:14 },
+  { word:'enigma', pos:'n.', pron:'/i-nig\'muh/', ko:'수수께끼', en:'anything puzzling or hard to figure out', ex:'Her speech opened with a memorable an enigma.', syn:'mystery', lesson:14 },
+  { word:'ineffectual', pos:'adj.', pron:'/in-uh-fek\'choo-ul/', ko:'효과 없는', en:'not bringing about the desired result; futile', ex:'The results turned out to be ineffectual beyond what anyone expected.', syn:'futile', lesson:14 },
+  { word:'infallible', pos:'adj.', pron:'/in-fal\'uh-bul/', ko:'절대 틀리지 않는', en:'incapable of making an error, or unlikely to fail', ex:'Her explanation was so infallible that no one had further questions.', syn:'unerring', lesson:14 },
+  { word:'irrepressible', pos:'adj.', pron:'/ir-i-pres\'uh-bul/', ko:'억누를 수 없는', en:'impossible to hold back or control', ex:'The critics called the new design surprisingly irrepressible.', syn:'unstoppable', lesson:14 },
+  { word:'luminous', pos:'adj.', pron:'/loo\'muh-nus/', ko:'빛을 내는; 명료한', en:'giving off light, or clear and easy to understand', ex:'Everyone agreed that his approach was remarkably luminous.', syn:'glowing', lesson:14 },
+  { word:'millennium', pos:'n.', pron:'/mi-len\'ee-um/', ko:'천 년', en:'a period of one thousand years', ex:'The report described a millennium that surprised the readers.', syn:'age', lesson:14 },
+  { word:'mire', pos:'n.', pron:'/mir/', ko:'진창; 늪지대', en:'an area of deep mud or wet ground', ex:'Everyone in the room noticed a mire right away.', syn:'swamp', lesson:14 },
+  { word:'pestilence', pos:'n.', pron:'/pes\'tuh-luns/', ko:'전염병', en:'a rapidly spreading and often fatal disease', ex:'The article focused on a pestilence from the town\'s history.', syn:'plague', lesson:14 },
+  { word:'stagnate', pos:'v.', pron:'/stag\'nat/', ko:'정체되다', en:'to fail to develop, change, or move', ex:'Sales began to stagnate once the new competitor arrived.', syn:'stall', lesson:14 },
+  { word:'sublime', pos:'adj.', pron:'/suh-blim\'/', ko:'고결한; 숭고한', en:'great or noble in thought or expression', ex:'The results turned out to be sublime beyond what anyone expected.', syn:'majestic', lesson:14 },
+  { word:'vie', pos:'v.', pron:'/vi/', ko:'경쟁하다', en:'to compete for something, as in a contest', ex:'Two candidates continued to vie for the same position.', syn:'compete', lesson:14 },
+  { word:'voluminous', pos:'adj.', pron:'/vuh-loo\'muh-nus/', ko:'부피가 큰', en:'having great bulk or volume; ample', ex:'The critics called the new design surprisingly voluminous.', syn:'bulky', lesson:14 },
+  { word:'ascertain', pos:'v.', pron:'/as-ur-tan\'/', ko:'확인하다; 알아내다', en:'to find out for certain', ex:'Investigators worked quickly to ascertain the cause of the fire.', syn:'determine', lesson:15 },
+  { word:'chastise', pos:'v.', pron:'/chas-tiz\'/', ko:'매질로 벌하다; 호되게 질책하다', en:'to punish by beating, or to criticize severely', ex:'The coach did not chastise the rookie after the mistake.', syn:'scold', lesson:15 },
+  { word:'cull', pos:'v.', pron:'/kul/', ko:'솎아내다', en:'to select and remove weak members from a group', ex:'Rangers had to cull the weakest animals from the herd.', syn:'weed out', lesson:15 },
+  { word:'defer', pos:'v.', pron:'/di-fur\'/', ko:'연기하다; 존중하여 따르다', en:'to put off or postpone, or to yield out of respect', ex:'The board chose to defer the decision until next month.', syn:'postpone', lesson:15 },
+  { word:'desist', pos:'v.', pron:'/di-zist\'/', ko:'그만두다; 삼가다', en:'to refrain from continuing something', ex:'Officials ordered the crowd to desist immediately.', syn:'cease', lesson:15 },
+  { word:'discredit', pos:'v.', pron:'/dis-kred\'it/', ko:'평판을 손상시키다; 신뢰를 무너뜨리다', en:'to hurt the reputation of, or to destroy trust in', ex:'The new evidence seemed to discredit the earlier report.', syn:'disgrace', lesson:15 },
+  { word:'encroach', pos:'v.', pron:'/en-kroch\'/', ko:'침범하다', en:'to advance gradually beyond usual limits', ex:'Developers continued to encroach on the protected wetland.', syn:'trespass', lesson:15 },
+  { word:'foreboding', pos:'n.', pron:'/for-bo\'ding/', ko:'불길한 예감', en:'a strong feeling that something bad will happen', ex:'The article focused on a foreboding from the town\'s history.', syn:'premonition', lesson:15 },
+  { word:'humane', pos:'adj.', pron:'/hyoo-man\'/', ko:'인도적인', en:'compassionate toward humans or animals', ex:'Everyone agreed that his approach was remarkably humane.', syn:'compassionate', lesson:15 },
+  { word:'irrational', pos:'adj.', pron:'/i-rash\'uh-nul/', ko:'비이성적인', en:'lacking sound judgment; not governed by reason', ex:'The results turned out to be irrational beyond what anyone expected.', syn:'illogical', lesson:15 },
+  { word:'lurid', pos:'adj.', pron:'/loor\'id/', ko:'소름 끼치는; 화염처럼 붉은', en:'causing horror, or glowing with the red of flames', ex:'Her explanation was so lurid that no one had further questions.', syn:'graphic', lesson:15 },
+  { word:'perpetuate', pos:'v.', pron:'/pur-pech\'oo-at/', ko:'영속시키다', en:'to cause to continue indefinitely', ex:'Old stereotypes can perpetuate themselves for generations.', syn:'prolong', lesson:15 },
+  { word:'restive', pos:'adj.', pron:'/res\'tiv/', ko:'조바심 내는', en:'impatient because of restriction or delay', ex:'Everyone agreed that his approach was remarkably restive.', syn:'restless', lesson:15 },
+  { word:'stamina', pos:'n.', pron:'/stam\'uh-nuh/', ko:'지구력', en:'physical strength or endurance', ex:'The report described a stamina that surprised the readers.', syn:'endurance', lesson:15 },
+  { word:'surveillance', pos:'n.', pron:'/sur-va\'luns/', ko:'감시', en:'close observation of a person or area', ex:'Everyone in the room noticed a surveillance right away.', syn:'monitoring', lesson:15 },
+  { word:'alleviate', pos:'v.', pron:'/uh-lee\'vee-at/', ko:'완화하다', en:'to relieve or make more bearable', ex:'Reporters like to alleviate strong reactions from their readers.', syn:'ease', lesson:16 },
+  { word:'antidote', pos:'n.', pron:'/an\'ti-dot/', ko:'해독제', en:'a remedy that counteracts a poison, or anything that relieves an unwanted condition', ex:'Her speech opened with a memorable an antidote.', syn:'remedy', lesson:16 },
+  { word:'bedlam', pos:'n.', pron:'/bed\'lum/', ko:'아수라장', en:'a very confused and noisy scene', ex:'The report described a bedlam that surprised the readers.', syn:'chaos', lesson:16 },
+  { word:'cajole', pos:'v.', pron:'/kuh-jol\'/', ko:'구슬리다; 살살 달래서 설득하다', en:'to persuade with gentle, repeated requests', ex:'It took real effort for the team to cajole through the final week.', syn:'coax', lesson:16 },
+  { word:'glib', pos:'adj.', pron:'/glib/', ko:'번지르르한', en:'speaking easily but without real sincerity', ex:'The critics called the new design surprisingly glib.', syn:'slick', lesson:16 },
+  { word:'haggard', pos:'adj.', pron:'/hag\'urd/', ko:'초췌한', en:'looking tired and worn out', ex:'Everyone agreed that his approach was remarkably haggard.', syn:'gaunt', lesson:16 },
+  { word:'immaculate', pos:'adj.', pron:'/i-mak\'yuh-lit/', ko:'티끌 하나 없는; 흠잡을 데 없는', en:'perfectly clean, or without a flaw', ex:'The results turned out to be immaculate beyond what anyone expected.', syn:'spotless', lesson:16 },
+  { word:'incessant', pos:'adj.', pron:'/in-ses\'unt/', ko:'끊임없는', en:'going on without interruption; continual', ex:'Her explanation was so incessant that no one had further questions.', syn:'ceaseless', lesson:16 },
+  { word:'indulgent', pos:'adj.', pron:'/in-dul\'junt/', ko:'너그러운', en:'inclined to give in easily; lenient', ex:'The critics called the new design surprisingly indulgent.', syn:'lenient', lesson:16 },
+  { word:'loll', pos:'v.', pron:'/lol/', ko:'느긋하게 기대다; 축 늘어지다', en:'to sit or lie in a relaxed way, or to hang loosely', ex:'Teachers often loll students to work harder before exams.', syn:'lounge', lesson:16 },
+  { word:'pittance', pos:'n.', pron:'/pit\'ns/', ko:'쥐꼬리만 한 돈', en:'a very small amount, especially of money', ex:'The report described a pittance that surprised the readers.', syn:'trifle', lesson:16 },
+  { word:'pungent', pos:'adj.', pron:'/pun\'junt/', ko:'톡 쏘는; 신랄한', en:'having a sharp taste or smell, or sharply critical', ex:'Her explanation was so pungent that no one had further questions.', syn:'sharp', lesson:16 },
+  { word:'rue', pos:'v.', pron:'/roo/', ko:'후회하다', en:'to feel regret or sorrow over', ex:'Reporters like to rue strong reactions from their readers.', syn:'regret', lesson:16 },
+  { word:'strident', pos:'adj.', pron:'/strid\'nt/', ko:'귀에 거슬리는', en:'harsh and grating; loud and shrill', ex:'Everyone agreed that his approach was remarkably strident.', syn:'harsh', lesson:16 },
+  { word:'vehement', pos:'adj.', pron:'/vee\'uh-munt/', ko:'격렬한', en:'expressing strong feeling; intense', ex:'The results turned out to be vehement beyond what anyone expected.', syn:'intense', lesson:16 },
+  { word:'accord', pos:'n.', pron:'/uh-kord\'/', ko:'일치; 합의', en:'agreement or harmony; a formal agreement', ex:'Everyone in the room noticed an accord right away.', syn:'agreement', lesson:17 },
+  { word:'affirm', pos:'v.', pron:'/uh-furm\'/', ko:'단언하다', en:'to declare positively', ex:'The judge stood ready to affirm the original decision.', syn:'assert', lesson:17 },
+  { word:'bequeath', pos:'v.', pron:'/bee-kweeth\'/', ko:'물려주다; 유언으로 남기다', en:'to pass on to others, or to leave in a will', ex:'Teachers often bequeath students to work harder before exams.', syn:'leave', lesson:17 },
+  { word:'citadel', pos:'n.', pron:'/sit\'uh-dul/', ko:'요새', en:'a fortress on a hill; a stronghold', ex:'The report described a citadel that surprised the readers.', syn:'fortress', lesson:17 },
+  { word:'confer', pos:'v.', pron:'/kun-fur\'/', ko:'수여하다; 협의하다', en:'to grant or bestow, or to consult', ex:'The two leaders planned to confer before making a final choice.', syn:'consult', lesson:17 },
+  { word:'coup', pos:'n.', pron:'/koo/', ko:'쾌거; 쿠데타', en:'a striking successful action, or the sudden overthrow of a government', ex:'The article focused on a coup from the town\'s history.', syn:'overthrow', lesson:17 },
+  { word:'dignitary', pos:'n.', pron:'/dig\'nuh-ter-ee/', ko:'고위 인사', en:'a person of high rank or honor', ex:'Her speech opened with a memorable a dignitary.', syn:'official', lesson:17 },
+  { word:'embroil', pos:'v.', pron:'/em-broil\'/', ko:'휘말리게 하다', en:'to involve in a conflict or dispute', ex:'The scandal threatened to embroil several other officials.', syn:'entangle', lesson:17 },
+  { word:'epoch', pos:'n.', pron:'/ep\'uk/', ko:'시대', en:'an extended period of time marked by related events', ex:'Everyone in the room noticed an epoch right away.', syn:'era', lesson:17 },
+  { word:'impeccable', pos:'adj.', pron:'/im-pek\'uh-bul/', ko:'흠잡을 데 없는', en:'free from fault; perfect', ex:'The critics called the new design surprisingly impeccable.', syn:'flawless', lesson:17 },
+  { word:'institute', pos:'v.', pron:'/in\'stuh-toot/', ko:'도입하다; 제정하다', en:'to establish or put into effect', ex:'Teachers often institute students to work harder before exams.', syn:'establish', lesson:17 },
+  { word:'patriarch', pos:'n.', pron:'/pa\'tree-ark/', ko:'가장; 족장', en:'the male founder or ruler of a family or tribe', ex:'The report described a patriarch that surprised the readers.', syn:'elder', lesson:17 },
+  { word:'rapport', pos:'n.', pron:'/ra-por\'/', ko:'친밀한 유대감', en:'a feeling of harmonious connection between people', ex:'Everyone in the room noticed a rapport right away.', syn:'bond', lesson:17 },
+  { word:'renounce', pos:'v.', pron:'/ri-nowns\'/', ko:'포기하다', en:'to give up a right to; to reject', ex:'He decided to renounce his claim to the family business.', syn:'relinquish', lesson:17 },
+  { word:'rhetoric', pos:'n.', pron:'/ret\'ur-ik/', ko:'수사학; 미사여구', en:'the skillful use of language, or exaggerated insincere language', ex:'Her speech opened with a memorable a rhetoric.', syn:'oratory', lesson:17 },
+  { word:'aperture', pos:'n.', pron:'/ap\'ur-chur/', ko:'구멍; 틈', en:'an opening or hole', ex:'The report described an aperture that surprised the readers.', syn:'opening', lesson:18 },
+  { word:'cache', pos:'n.', pron:'/kash/', ko:'은닉처; 비축물', en:'a hiding place, or anything hidden there', ex:'Everyone in the room noticed a cache right away.', syn:'stash', lesson:18 },
+  { word:'combustible', pos:'adj.', pron:'/kum-bus\'tuh-bul/', ko:'불이 잘 붙는', en:'capable of catching fire', ex:'The critics called the new design surprisingly combustible.', syn:'flammable', lesson:18 },
+  { word:'delegate', pos:'n.', pron:'/del\'uh-git/', ko:'대표; 대리인', en:'a person appointed to represent others', ex:'Her speech opened with a memorable a delegate.', syn:'representative', lesson:18 },
+  { word:'inclement', pos:'adj.', pron:'/in-klem\'unt/', ko:'궂은; 가혹한', en:'stormy, or harsh and unmerciful', ex:'The results turned out to be inclement beyond what anyone expected.', syn:'harsh', lesson:18 },
+  { word:'indelible', pos:'adj.', pron:'/in-del\'uh-bul/', ko:'지울 수 없는', en:'not able to be erased; permanent', ex:'Her explanation was so indelible that no one had further questions.', syn:'permanent', lesson:18 },
+  { word:'malady', pos:'n.', pron:'/mal\'uh-dee/', ko:'질병', en:'a sickness or unhealthy condition', ex:'The article focused on a malady from the town\'s history.', syn:'ailment', lesson:18 },
+  { word:'memoir', pos:'n.', pron:'/mem\'wahr/', ko:'회고록', en:'an account based on personal experience', ex:'Her speech opened with a memorable a memoir.', syn:'autobiography', lesson:18 },
+  { word:'paramount', pos:'adj.', pron:'/par\'uh-mownt/', ko:'가장 중요한', en:'most important; chief', ex:'The results turned out to be paramount beyond what anyone expected.', syn:'foremost', lesson:18 },
+  { word:'rectify', pos:'v.', pron:'/rek\'tuh-fi/', ko:'바로잡다', en:'to correct or adjust', ex:'It took real effort for the team to rectify through the final week.', syn:'correct', lesson:18 },
+  { word:'requisite', pos:'adj.', pron:'/rek\'wuh-zit/', ko:'필요한', en:'required; necessary', ex:'The critics called the new design surprisingly requisite.', syn:'necessary', lesson:18 },
+  { word:'squeamish', pos:'adj.', pron:'/skwee\'mish/', ko:'비위가 약한', en:'easily made to feel upset or sick', ex:'Everyone agreed that his approach was remarkably squeamish.', syn:'queasy', lesson:18 },
+  { word:'tract', pos:'n.', pron:'/trakt/', ko:'땅의 구역; 신체 계통; 소책자', en:'an area of land, a body system, or a persuasive pamphlet', ex:'The report described a tract that surprised the readers.', syn:'expanse', lesson:18 },
+  { word:'tribulation', pos:'n.', pron:'/trib-yuh-la\'shun/', ko:'큰 고난', en:'great trouble or suffering', ex:'Everyone in the room noticed a tribulation right away.', syn:'hardship', lesson:18 },
+  { word:'vignette', pos:'n.', pron:'/vin-yet\'/', ko:'짧은 정경 묘사', en:'a short sketch that provides a clear picture', ex:'The article focused on a vignette from the town\'s history.', syn:'sketch', lesson:18 },
+  { word:'bulwark', pos:'n.', pron:'/bul\'wurk/', ko:'방벽; 방어용 구조물', en:'a wall-like structure used as a defense, or a protector', ex:'Her speech opened with a memorable a bulwark.', syn:'rampart', lesson:19 },
+  { word:'culminate', pos:'v.', pron:'/kul\'mi-nat/', ko:'절정에 이르다', en:'to reach or bring to the highest point', ex:'Months of practice would culminate in a single final performance.', syn:'peak', lesson:19 },
+  { word:'engulf', pos:'v.', pron:'/en-gulf\'/', ko:'완전히 뒤덮다; 압도하다', en:'to swallow up by covering completely; to overwhelm', ex:'Thick smoke began to engulf the entire building.', syn:'overwhelm', lesson:19 },
+  { word:'feasible', pos:'adj.', pron:'/fee\'zuh-bul/', ko:'실현 가능한', en:'able to be done; possible or likely', ex:'The critics called the new design surprisingly feasible.', syn:'viable', lesson:19 },
+  { word:'glut', pos:'n.', pron:'/glut/', ko:'공급 과잉', en:'a much larger supply than is needed', ex:'Her speech opened with a memorable a glut.', syn:'surplus', lesson:19 },
+  { word:'havoc', pos:'n.', pron:'/hav\'uk/', ko:'대대적인 파괴; 대혼란', en:'widespread destruction, or great confusion', ex:'The report described a havoc that surprised the readers.', syn:'devastation', lesson:19 },
+  { word:'impregnable', pos:'adj.', pron:'/im-preg\'nuh-bul/', ko:'난공불락의', en:'impossible to attack successfully', ex:'Her explanation was so impregnable that no one had further questions.', syn:'unassailable', lesson:19 },
+  { word:'indefatigable', pos:'adj.', pron:'/in-duh-fat\'i-guh-bul/', ko:'지칠 줄 모르는', en:'not easily made tired; tireless', ex:'The critics called the new design surprisingly indefatigable.', syn:'tireless', lesson:19 },
+  { word:'onslaught', pos:'n.', pron:'/an\'slot/', ko:'맹공격', en:'a fierce attack', ex:'Her speech opened with a memorable an onslaught.', syn:'assault', lesson:19 },
+  { word:'phenomenon', pos:'n.', pron:'/fuh-nam\'uh-nan/', ko:'현상; 이례적인 사람·사건', en:'any fact or event that can be observed, or an unusual fact or person', ex:'The report described a phenomenon that surprised the readers.', syn:'occurrence', lesson:19 },
+  { word:'picturesque', pos:'adj.', pron:'/pik-chuh-resk\'/', ko:'그림 같은', en:'pleasing or charming to look at, like a picture', ex:'Her explanation was so picturesque that no one had further questions.', syn:'scenic', lesson:19 },
+  { word:'simultaneous', pos:'adj.', pron:'/si-mul-ta\'nee-us/', ko:'동시에 일어나는', en:'happening or existing at the same time', ex:'The critics called the new design surprisingly simultaneous.', syn:'concurrent', lesson:19 },
+  { word:'stipulate', pos:'v.', pron:'/stip\'yuh-lat/', ko:'명시하다; 규정하다', en:'to require as part of an agreement or contract', ex:'The contract seemed to stipulate a strict deadline for delivery.', syn:'specify', lesson:19 },
+  { word:'susceptible', pos:'adj.', pron:'/suh-sep\'tuh-bul/', ko:'영향받기 쉬운', en:'open or subject to; easily influenced or affected by', ex:'The results turned out to be susceptible beyond what anyone expected.', syn:'prone', lesson:19 },
+  { word:'wrest', pos:'v.', pron:'/rest/', ko:'비틀어 잡아 빼내다; 힘으로 빼앗다', en:'to pull away with a twist, or to take by force', ex:'Reporters tried to wrest an answer from the silent official.', syn:'wrench', lesson:19 },
+  { word:'alienate', pos:'v.', pron:'/ale\'yuh-nat/', ko:'멀어지게 하다; 소외시키다', en:'to cause to feel unfriendly, or to cause to feel cut off from others', ex:'His harsh comments began to alienate even his closest friends.', syn:'estrange', lesson:20 },
+  { word:'fervent', pos:'adj.', pron:'/fur\'vunt/', ko:'열렬한', en:'having or showing great warmth of feeling; intensely eager', ex:'Everyone agreed that his approach was remarkably fervent.', syn:'ardent', lesson:20 },
+  { word:'forbearance', pos:'n.', pron:'/for-bair\'uns/', ko:'자제력; 인내심', en:'a showing of self-control or patience', ex:'The report described a forbearance that surprised the readers.', syn:'patience', lesson:20 },
+  { word:'gullible', pos:'adj.', pron:'/gul\'uh-bul/', ko:'잘 속는', en:'easily tricked or cheated; too trusting', ex:'Her explanation was so gullible that no one had further questions.', syn:'credulous', lesson:20 },
+  { word:'hindrance', pos:'n.', pron:'/hin\'druns/', ko:'방해물', en:'any person or thing that is an obstacle', ex:'The article focused on a hindrance from the town\'s history.', syn:'obstacle', lesson:20 },
+  { word:'inflammatory', pos:'adj.', pron:'/in-flam\'uh-tor-ee/', ko:'선동적인', en:'causing anger or trouble', ex:'Everyone agreed that his approach was remarkably inflammatory.', syn:'provocative', lesson:20 },
+  { word:'ordain', pos:'v.', pron:'/or-dan\'/', ko:'명령하다; 성직자로 임명하다', en:'to order or prearrange, or to install as a minister or priest', ex:'The council moved to ordain new rules for the festival.', syn:'decree', lesson:20 },
+  { word:'ovation', pos:'n.', pron:'/o-va\'shun/', ko:'열렬한 환영; 우레와 같은 박수', en:'an enthusiastic reception; long and loud applause', ex:'Everyone in the room noticed an ovation right away.', syn:'applause', lesson:20 },
+  { word:'overt', pos:'adj.', pron:'/o-vurt\'/', ko:'공공연한', en:'not hidden; public', ex:'The critics called the new design surprisingly overt.', syn:'open', lesson:20 },
+  { word:'recant', pos:'v.', pron:'/ri-kant\'/', ko:'철회하다', en:'to take back an opinion or statement; to confess to being wrong', ex:'Under pressure, the witness chose to recant her earlier statement.', syn:'retract', lesson:20 },
+  { word:'rejoinder', pos:'n.', pron:'/ri-join\'dur/', ko:'대답; 응수', en:'a reply to what has been said', ex:'The report described a rejoinder that surprised the readers.', syn:'retort', lesson:20 },
+  { word:'reproach', pos:'v.', pron:'/ri-proch\'/', ko:'비난하다', en:'to find fault with; to blame', ex:'His mother did not reproach him for the honest mistake.', syn:'blame', lesson:20 },
+  { word:'servile', pos:'adj.', pron:'/sur\'vil/', ko:'비굴한', en:'excessively humble; overly willing to serve or to please', ex:'The critics called the new design surprisingly servile.', syn:'obsequious', lesson:20 },
+  { word:'surpass', pos:'v.', pron:'/sur-pas\'/', ko:'능가하다', en:'to exceed or go beyond', ex:'Her final score managed to surpass everyone else in the class.', syn:'exceed', lesson:20 },
+  { word:'vilify', pos:'v.', pron:'/vil\'uh-fi/', ko:'비방하다', en:'to make vicious remarks about someone; to slander', ex:'The press continued to vilify the coach after the loss.', syn:'slander', lesson:20 }
+];
+
+const TYPES = {
+  meaning: { label:'MEANING', name:'Word to Meaning', color:'#2A3A5C' },
+  blank:   { label:'BLANK',   name:'Fill the Blank', color:'#E2613C' },
+  odd:     { label:'ODD ONE', name:'Find the Wrong Word', color:'#3F8A5F' },
+  synonym: { label:'SYNONYM', name:'동의어', color:'#8A6BAE' },
+};
+const STORE = 'vocabmaster.v3.stats';
+const LONG_PRESS_MS = 480;
+
+function shuffle(a){ const r=a.slice(); for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];} return r; }
+function pick(a,n){ return shuffle(a).slice(0,n); }
+function lessonWords(n){ return BOOK8.filter(w=>w.lesson===n); }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+let audioCtx = null;
+function beep(kind){
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const seq = kind === 'right' ? [[660,0],[880,0.09]] : kind === 'wrong' ? [[300,0],[200,0.11]] : [[520,0],[660,0.08],[880,0.16]];
+    seq.forEach(([f,t]) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = kind === 'wrong' ? 'sawtooth' : 'triangle';
+      o.frequency.value = f;
+      const s = audioCtx.currentTime + t;
+      g.gain.setValueAtTime(0.0001, s);
+      g.gain.exponentialRampToValueAtTime(0.16, s + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + 0.17);
+      o.connect(g); g.connect(audioCtx.destination); o.start(s); o.stop(s + 0.2);
+    });
+  } catch (e) {}
+}
+function speak(text){
+  try {
+    if (!('speechSynthesis' in window) || !text) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(text));
+    u.lang = 'en-US'; u.rate = 0.9; u.pitch = 1;
+    const v = window.speechSynthesis.getVoices().find(x=>/en(-|_)US/i.test(x.lang));
+    if (v) u.voice = v;
+    window.speechSynthesis.speak(u);
+  } catch(e) {}
+}
+function swapWord(sentence, from, to){
+  let out = sentence.split(from).join(to);
+  const vowel = /^[aeiou]/i.test(to);
+  out = out.replace(new RegExp('\\b(a|an|A|An)\\s+' + to + '\\b', 'g'), (m, art) => {
+    const cap = art[0] === 'A';
+    const fixed = vowel ? 'an' : 'a';
+    return (cap ? fixed[0].toUpperCase() + fixed.slice(1) : fixed) + ' ' + to;
+  });
+  return out;
+}
+function makeQuestion(type, pool, all, forced){
+  if (type === 'meaning'){
+    const w = forced || pick(pool,1)[0];
+    const wrongs = pick(all.filter(x=>x.word!==w.word),3);
+    return { type, word:w.word, instruction:'What does this word mean?', prompt:w.word, promptSize:'34px',
+      choices: shuffle([{text:w.en,correct:true},...wrongs.map(x=>({text:x.en,correct:false}))]) };
+  }
+  if (type === 'blank'){
+    const w = forced || pick(pool,1)[0];
+    const wrongs = pick(all.filter(x=>x.word!==w.word),3);
+    return { type, word:w.word, instruction:'Choose the word that fits the blank.',
+      prompt: w.ex.split(w.word).join('______'), promptSize:'20px',
+      choices: shuffle([{text:w.word,correct:true},...wrongs.map(x=>({text:x.word,correct:false}))]) };
+  }
+  if (type === 'synonym'){
+    const w = forced || pick(pool,1)[0];
+    const wrongs = pick(all.filter(x=>x.word!==w.word),3);
+    return { type, word:w.word, instruction:'Which word is closest in meaning?', prompt:w.word, promptSize:'34px',
+      choices: shuffle([{text:w.syn,correct:true},...wrongs.map(x=>({text:x.syn,correct:false}))]) };
+  }
+  const source = all.length >= 5 ? all : BOOK8;
+  const target = forced || pick(source,1)[0];
+  const rest = pick(source.filter(x=>x.word!==target.word),4);
+  const badIdx = Math.floor(Math.random()*5);
+  const five = [...rest.slice(0,badIdx), target, ...rest.slice(badIdx)];
+  const bad = five[badIdx];
+  const swap = pick(source.filter(x=>x.word!==bad.word),1)[0];
+  return { type:'odd', word:bad.word, instruction:'One sentence uses the wrong word. Find it.', prompt:'Which one is incorrect?', promptSize:'19px',
+    choices: five.map((x,i)=>({ text: i===badIdx ? swapWord(x.ex, x.word, swap.word) : x.ex, correct: i===badIdx })) };
+}
+
+/* ============ STATE ============ */
+const S = {
+  screen:'home', tab:'words',
+  sets:[{id:5,name:'Book 8',count:20}],
+  currentSetId:null, lessonNum:null, expandedWord:null, detailWord:null,
+  testLesson:null,
+  quizTitle:'', questions:[], qIdx:0, score:0, missed:[], locked:false, chosen:null,
+  reviewOpen:false, reviewSession:[], reviewCleared:0, reviewLocked:false, reviewChosen:null, rq:null,
+  stats:{ tests:0, right:0, total:0, wrong:{}, byType:{}, history:[], queue:[] },
+};
+try { const raw = localStorage.getItem(STORE); if (raw) Object.assign(S.stats, JSON.parse(raw)); } catch(e){}
+function save(){ try { localStorage.setItem(STORE, JSON.stringify(S.stats)); } catch(e){} }
+
+/* ============ NAV ============ */
+function go(screen, extra){ Object.assign(S, extra||{}); S.screen = screen; render(); }
+function goSets(){ go('sets', {tab:'words', currentSetId:null}); }
+function goTestHub(){ go('testHub', {tab:'test'}); }
+function goStats(){ go('stats', {tab:'stats'}); }
+function goTestLessonPick(){ go('testPick'); }
+function backToLessons(){ go('lessons', {lessonNum:null, expandedWord:null}); }
+function backToWords(){ go('words', {detailWord:null}); }
+function openLessonsFor(id){ go('lessons', {currentSetId:Number(id)}); }
+function openWordsFor(ln){ go('words', {lessonNum:Number(ln), expandedWord:null}); }
+
+let _timer=null, _fired=false;
+function wordDown(w){ _fired=false; _timer=setTimeout(()=>{ _fired=true; go('detail', {detailWord: BOOK8.find(x=>x.word===w)}); }, LONG_PRESS_MS); }
+function wordUp(w){ clearTimeout(_timer); if(_fired) return; S.expandedWord = S.expandedWord===w ? null : w; render(); }
+function wordCancel(){ clearTimeout(_timer); }
+
+function startLessonTest(ln){ go('testType', {testLesson:Number(ln)}); }
+
+function beginTypedTest(kind){
+  const ln = S.testLesson || 1;
+  const pool = lessonWords(ln);
+  let qs;
+  if (kind === 'mix'){
+    qs = shuffle([
+      ...pick(pool,3).map(w=>makeQuestion('meaning',pool,BOOK8,w)),
+      ...pick(pool,3).map(w=>makeQuestion('blank',pool,BOOK8,w)),
+      ...pick(pool,3).map(w=>makeQuestion('odd',pool,BOOK8,w)),
+    ]);
+  } else {
+    qs = shuffle(pool.map(w=>makeQuestion(kind,pool,BOOK8,w)));
+  }
+  beep('start');
+  go('quiz', { quizTitle:'LESSON '+ln, questions:qs, qIdx:0, score:0, missed:[], locked:false, chosen:null });
+}
+
+function startBigTest(){
+  const qs = shuffle([
+    ...Array.from({length:8},()=>makeQuestion('odd',BOOK8,BOOK8)),
+    ...Array.from({length:7},()=>makeQuestion('synonym',BOOK8,BOOK8)),
+  ]);
+  beep('start');
+  go('quiz', { quizTitle:'BIG TEST', questions:qs, qIdx:0, score:0, missed:[], locked:false, chosen:null });
+}
+
+function quitQuiz(){ go('testHub', {tab:'test'}); }
+
+function answer(id){
+  if (S.locked) return;
+  const q = S.questions[S.qIdx];
+  const ok = !!q.choices[id].correct;
+  beep(ok ? 'right' : 'wrong');
+  if (!ok) S.missed.push(q.word);
+  S.locked = true; S.chosen = id; S.score += ok?1:0;
+  if (!ok) recordWrong(q.word, q.type); else recordRight(q.type);
+  render();
+  setTimeout(()=>{
+    const next = S.qIdx+1;
+    if (next >= S.questions.length) finishQuiz();
+    else { S.qIdx=next; S.locked=false; S.chosen=null; render(); }
+  }, ok ? 520 : 900);
+}
+function recordWrong(word, type){
+  S.stats.wrong[word] = (S.stats.wrong[word]||0)+1;
+  const t = S.stats.byType[type] || {right:0,total:0};
+  S.stats.byType[type] = { right:t.right, total:t.total+1 };
+  S.stats.total += 1;
+  if (!S.stats.queue.includes(word)) S.stats.queue.push(word);
+  save();
+}
+function recordRight(type){
+  const t = S.stats.byType[type] || {right:0,total:0};
+  S.stats.byType[type] = { right:t.right+1, total:t.total+1 };
+  S.stats.total += 1; S.stats.right += 1;
+  save();
+}
+function finishQuiz(){
+  const pct = Math.round(S.score/S.questions.length*100);
+  S.stats.tests += 1;
+  S.stats.history = [...S.stats.history, {pct, label:S.quizTitle.split(' ')[0].slice(0,6)}].slice(-6);
+  save();
+  go('result', {locked:false, chosen:null});
+}
+
+function startReview(){
+  const q = S.stats.queue;
+  if (q.length < 10) return;
+  beep('start');
+  S.reviewOpen = true; S.reviewSession = q.slice(); S.reviewCleared = 0; S.reviewLocked=false; S.reviewChosen=null;
+  S.rq = buildReviewQ(q[0]);
+  render();
+}
+function buildReviewQ(word){
+  const w = BOOK8.find(x=>x.word===word) || BOOK8[0];
+  return makeQuestion(Math.random()<0.5?'meaning':'blank',[w],BOOK8);
+}
+function reviewAnswer(id){
+  if (S.reviewLocked) return;
+  const ok = !!S.rq.choices[id].correct;
+  beep(ok?'right':'wrong');
+  S.reviewLocked=true; S.reviewChosen=id;
+  render();
+  setTimeout(()=>{
+    const session = S.reviewSession.slice();
+    const cur = session.shift();
+    if (ok){ S.reviewCleared += 1; S.stats.queue = S.stats.queue.filter(x=>x!==cur); }
+    else { session.push(cur); S.stats.wrong[cur]=(S.stats.wrong[cur]||0)+1; S.stats.queue = S.stats.queue.filter(x=>x!==cur).concat([cur]); }
+    save();
+    S.reviewSession = session; S.reviewLocked=false; S.reviewChosen=null;
+    const done = S.reviewCleared >= 5 || session.length === 0;
+    S.rq = done ? null : buildReviewQ(session[0]);
+    render();
+  }, ok ? 520 : 900);
+}
+function closeReview(){ S.reviewOpen=false; S.rq=null; S.reviewSession=[]; S.reviewCleared=0; render(); }
+function resetStats(){ S.stats = { tests:0, right:0, total:0, wrong:{}, byType:{}, history:[], queue:[] }; save(); render(); }
+
+/* ============ RENDER HELPERS ============ */
+const CHEV = '<svg class="chev" width="9" height="15" viewBox="0 0 9 15"><path d="M1 1l6.5 6.5L1 14"></path></svg>';
+const BACK = '<svg width="11" height="18" viewBox="0 0 11 18"><path d="M9 1L1.5 9 9 17" stroke="#F8F5F0" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+const SPEAK_ICON_D = '<svg width="15" height="13" viewBox="0 0 18 16"><path d="M1 5.5h3L8 2v12L4 10.5H1z" fill="#2A3A5C"></path><path d="M11.5 4.8a4.5 4.5 0 010 6.4M14 2.3a8 8 0 010 11.4" stroke="#2A3A5C" stroke-width="1.6" fill="none" stroke-linecap="round"></path></svg>';
+const SPEAK_ICON_L = '<svg width="20" height="18" viewBox="0 0 18 16"><path d="M1 5.5h3L8 2v12L4 10.5H1z" fill="#FAF7F2"></path><path d="M11.5 4.8a4.5 4.5 0 010 6.4M14 2.3a8 8 0 010 11.4" stroke="#FAF7F2" stroke-width="1.6" fill="none" stroke-linecap="round"></path></svg>';
+
+function optionStyles(choices, locked, chosen){
+  return choices.map((c,i)=>{
+    let cls='';
+    if (locked && c.correct) cls='correct';
+    else if (locked && i===chosen) cls='wrong';
+    return { id:i, num:String(i+1), text:c.text, cls };
+  });
+}
+function tabbar(){
+  if (!['sets','testHub','stats'].includes(S.screen)) return '';
+  const wc = S.tab==='words' ? '#E2613C':'#8E9BB2', tc = S.tab==='test' ? '#E2613C':'#8E9BB2', sc = S.tab==='stats' ? '#E2613C':'#8E9BB2';
+  return `<div class="tabbar">
+    <button class="tabbtn" onclick="goSets()"><svg width="21" height="21" viewBox="0 0 21 21"><path d="M3 3h6.5v15H3zM11.5 3H18v15h-6.5z" stroke="${wc}" stroke-width="1.8" fill="none" stroke-linejoin="round"></path></svg><div class="lbl" style="color:${wc}">WORDS</div></button>
+    <button class="tabbtn" onclick="goTestHub()"><svg width="21" height="21" viewBox="0 0 21 21"><path d="M4 2.5h13v16H4zM7.5 7h6M7.5 11h6M7.5 15h3.5" stroke="${tc}" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg><div class="lbl" style="color:${tc}">TEST</div></button>
+    <button class="tabbtn" onclick="goStats()"><svg width="21" height="21" viewBox="0 0 21 21"><path d="M3 18V11M8.5 18V4M14 18v-9M19 18V7" stroke="${sc}" stroke-width="1.8" fill="none" stroke-linecap="round"></path></svg><div class="lbl" style="color:${sc}">STATS</div></button>
+  </div>`;
+}
+
+/* ============ SCREENS ============ */
+function screenHome(){
+  return `<div class="screen" style="align-items:center;justify-content:space-between;padding:110px 32px 56px;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:28px;">
+      <div style="text-align:center;">
+        <div class="serif" style="font-weight:700;font-size:56px;line-height:0.98;color:var(--navy);">VOCAB</div>
+        <div class="serif" style="font-weight:700;font-size:56px;line-height:0.98;color:var(--navy);">MASTER</div>
+      </div>
+      <div style="font-size:15px;color:var(--sub);text-align:center;max-width:260px;line-height:1.5;">All 20 lessons of Book 8 — 294 words, actually learned.</div>
+    </div>
+    <button class="pill pill-primary serif" style="width:100%;padding:18px 0;font-size:23px;letter-spacing:0.5px;" onclick="go('sets',{tab:'words'})">START</button>
+  </div>`;
+}
+
+function screenSets(){
+  const rows = S.sets.map(s=>`<div class="row" onclick="openLessonsFor(${s.id})">
+      <div><div class="rowtitle">${esc(s.name)}</div><div class="rowsub">${s.count} lessons</div></div>${CHEV}
+    </div>`).join('');
+  return `<div class="screen">
+    <div class="header"><div><div class="htitle">WORDBOOK</div><div class="hsub">Choose a set to study</div></div></div>
+    <div class="body">${rows}</div>
+    ${tabbar()}
+  </div>`;
+}
+
+function screenLessons(){
+  const set = S.sets.find(x=>x.id===S.currentSetId);
+  const n = set ? set.count : 20;
+  let rows = '';
+  for (let i=1;i<=n;i++) rows += `<div class="row" onclick="openWordsFor(${i})"><div class="rowtitle" style="font-weight:500;">Lesson ${i}</div>${CHEV}</div>`;
+  return `<div class="screen">
+    <div class="header"><button class="back" onclick="goSets()">${BACK}</button>
+      <div><div class="htitle">LESSONS</div><div class="hsub">${esc(set?set.name:'')}</div></div></div>
+    <div class="body">${rows}</div>
+  </div>`;
+}
+
+function screenWords(){
+  const words = lessonWords(S.lessonNum||1);
+  const set = S.sets.find(x=>x.id===S.currentSetId);
+  const rows = words.map(w=>{
+    const exp = S.expandedWord===w.word;
+    return `<div style="border-bottom:1px solid rgba(42,58,92,0.1);">
+      <div onpointerdown="wordDown('${w.word}')" onpointerup="wordUp('${w.word}')" onpointerleave="wordCancel()" oncontextmenu="return false" style="display:flex;align-items:center;justify-content:space-between;padding:16px 4px;cursor:pointer;user-select:none;">
+        <div class="serif" style="font-weight:700;font-size:19px;color:var(--navy);">${esc(w.word)}</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="badge">${esc(w.pos)}</span>
+          <button class="speakbtn" onclick="event.stopPropagation();speak('${esc(w.word)}')">${SPEAK_ICON_D}</button>
+        </div>
+      </div>
+      ${exp?`<div style="padding:2px 4px 16px;font-size:13.5px;color:#42537A;">${esc(w.en)}</div>`:''}
+    </div>`;
+  }).join('');
+  return `<div class="screen">
+    <div class="header"><button class="back" onclick="backToLessons()">${BACK}</button>
+      <div><div class="htitle">WORDS</div><div class="hsub">${esc(set?set.name:'')} · Lesson ${S.lessonNum}</div></div></div>
+    <div style="padding:12px 24px 4px;font-size:12px;color:var(--sub);">Tap a word to preview · hold to see the full entry</div>
+    <div class="body">${rows}</div>
+  </div>`;
+}
+
+function screenDetail(){
+  const d = S.detailWord || BOOK8[0];
+  return `<div class="screen" style="background:#FBF8F3;">
+    <div class="header"><button class="back" onclick="backToWords()">${BACK}</button><div style="font-size:13px;color:rgba(248,245,240,0.7);">Full entry</div></div>
+    <div class="body" style="padding:28px 28px 48px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div class="serif" style="font-weight:700;font-size:36px;color:var(--navy);">${esc(d.word)}</div>
+        <button class="speakbtn lg" onclick="speak('${esc(d.word)}')">${SPEAK_ICON_L}</button>
+      </div>
+      <div style="font-size:15px;font-style:italic;color:var(--sub);margin-top:6px;margin-bottom:26px;">${esc(d.pron)}</div>
+      <div style="display:flex;">
+        <div style="width:3px;background:rgba(226,97,60,0.35);border-radius:2px;margin-right:18px;flex-shrink:0;"></div>
+        <div>
+          <span class="badge solid">${esc(d.pos)}</span>
+          <div style="font-size:16px;color:var(--navy);margin-top:10px;line-height:1.5;">${esc(d.en)}</div>
+          <div style="font-size:14.5px;font-style:italic;color:var(--sub);margin-top:14px;padding:10px 12px;background:rgba(42,58,92,0.05);border-radius:10px;">"${esc(d.ex)}"</div>
+          <div style="font-size:13px;color:var(--sub);margin-top:14px;">Synonym · <span style="font-weight:600;color:var(--navy);">${esc(d.syn)}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function screenTestHub(){
+  const q = S.stats.queue || [];
+  const pct = Math.min(q.length/10*100,100);
+  const opac = q.length>=10 ? '1':'0.55';
+  const hint = q.length>=10 ? 'Ready. Five words per round — misses come back later.' : 'Unlocks at 10 wrong answers. Keep testing.';
+  return `<div class="screen">
+    <div class="header"><div><div class="htitle">TEST</div><div class="hsub">Pick a lesson, then answer</div></div></div>
+    <div class="body">
+      <div class="card" onclick="goTestLessonPick()">
+        <div style="display:flex;align-items:center;justify-content:space-between;"><div class="card-title">Lesson Test</div><span class="badge">3 TYPES</span></div>
+        <div class="card-desc">Pick a lesson, then choose your question type: word to meaning, fill the blank, or find the wrong word.</div>
+      </div>
+      <div class="card dark" onclick="startBigTest()">
+        <div style="display:flex;align-items:center;justify-content:space-between;"><div class="card-title">Big Test</div><span class="badge solid">15 Q</span></div>
+        <div class="card-desc">School-exam style. Spot the swapped word in five sentences, and compare synonyms.</div>
+      </div>
+      <div class="card" onclick="startReview()" style="opacity:${opac};">
+        <div style="display:flex;align-items:center;justify-content:space-between;"><div class="card-title">Wrong-Answer Drill</div><span class="badge">${q.length} / 10</span></div>
+        <div class="card-desc">${hint}</div>
+        <div style="height:6px;border-radius:3px;background:rgba(42,58,92,0.1);margin-top:14px;overflow:hidden;"><div style="height:100%;background:var(--orange);border-radius:3px;width:${pct}%;"></div></div>
+      </div>
+    </div>
+    ${tabbar()}
+  </div>`;
+}
+
+function screenTestPick(){
+  let cells = '';
+  for (let i=1;i<=20;i++) cells += `<div style="background:var(--card);border-radius:14px;padding:18px 0;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(42,58,92,0.07);" onclick="startLessonTest(${i})">
+      <div class="serif" style="font-weight:700;font-size:22px;color:var(--navy);">${i}</div>
+      <div style="font-size:10.5px;color:var(--sub);margin-top:2px;letter-spacing:0.5px;">LESSON</div>
+    </div>`;
+  return `<div class="screen">
+    <div class="header"><button class="back" onclick="goTestHub()">${BACK}</button>
+      <div><div class="htitle" style="font-size:24px;">SELECT LESSON</div><div class="hsub">Book 8 · 20 lessons</div></div></div>
+    <div class="body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-content:start;">${cells}</div>
+  </div>`;
+}
+
+function screenTestType(){
+  return `<div class="screen">
+    <div class="header"><button class="back" onclick="goTestLessonPick()">${BACK}</button>
+      <div><div class="htitle" style="font-size:24px;">TEST TYPE</div><div class="hsub">Book 8 · Lesson ${S.testLesson}</div></div></div>
+    <div class="body">
+      <div class="card" style="border-left:4px solid var(--navy);" onclick="beginTypedTest('meaning')">
+        <div style="display:flex;align-items:center;justify-content:space-between;"><div class="card-title">Word to Meaning</div><span style="font-size:11px;font-weight:700;color:var(--sub);">5 Q</span></div>
+        <div class="card-desc">See the English word, pick the correct meaning.</div>
+      </div>
+      <div class="card" style="border-left:4px solid var(--orange);" onclick="beginTypedTest('blank')">
+        <div style="display:flex;align-items:center;justify-content:space-between;"><div class="card-title">Fill the Blank</div><span style="font-size:11px;font-weight:700;color:var(--sub);">5 Q</span></div>
+        <div class="card-desc">Choose the word that completes the sentence.</div>
+      </div>
+      <div class="card" style="border-left:4px solid var(--green);" onclick="beginTypedTest('odd')">
+        <div style="display:flex;align-items:center;justify-content:space-between;"><div class="card-title">Find the Wrong Word</div><span style="font-size:11px;font-weight:700;color:var(--sub);">5 Q</span></div>
+        <div class="card-desc">Five sentences, one uses the wrong word. Spot it.</div>
+      </div>
+      <div class="card dark" onclick="beginTypedTest('mix')">
+        <div style="display:flex;align-items:center;justify-content:space-between;"><div class="card-title">All Three Mixed</div><span class="badge solid">9 Q</span></div>
+        <div class="card-desc">Three of each type, shuffled together.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function screenQuiz(){
+  const total = S.questions.length || 1;
+  const q = S.questions[S.qIdx] || { typeLabel:'', instruction:'', prompt:'', promptSize:'28px', choices:[], type:'meaning' };
+  const qType = TYPES[q.type] || TYPES.meaning;
+  const opts = optionStyles(q.choices, S.locked, S.chosen);
+  const pct = Math.round(S.qIdx/total*100);
+  const canSpeak = q.type==='meaning'||q.type==='synonym';
+  return `<div class="screen">
+    <div class="header" style="flex-direction:column;align-items:stretch;padding:28px 24px 20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <button class="back" onclick="quitQuiz()"><svg width="15" height="15" viewBox="0 0 15 15"><path d="M1 1l13 13M14 1L1 14" stroke="#F8F5F0" stroke-width="2.2" stroke-linecap="round"></path></svg></button>
+        <div style="font-size:13px;font-weight:600;color:rgba(248,245,240,0.8);">${esc(S.quizTitle)}</div>
+        <div class="serif" style="font-weight:700;font-size:16px;color:#F8F5F0;">${S.qIdx+1}/${total}</div>
+      </div>
+      <div style="height:5px;border-radius:3px;background:rgba(248,245,240,0.2);margin-top:16px;overflow:hidden;"><div style="height:100%;background:var(--orange);border-radius:3px;width:${pct}%;"></div></div>
+    </div>
+    <div style="padding:22px 24px 6px;">
+      <span class="badge">${qType.label}</span>
+      <div style="font-size:14px;color:var(--sub);margin-top:14px;line-height:1.5;">${esc(q.instruction)}</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
+        <div class="serif" style="font-weight:700;font-size:${q.promptSize};color:var(--navy);line-height:1.3;">${esc(q.prompt)}</div>
+        ${canSpeak?`<button class="speakbtn" style="width:38px;height:38px;" onclick="speak('${esc(q.word)}')">${SPEAK_ICON_D}</button>`:''}
+      </div>
+    </div>
+    <div class="body">${opts.map(o=>`<div class="opt ${o.cls}" onclick="answer(${o.id})"><div class="n">${o.num}</div><div class="t">${esc(o.text)}</div></div>`).join('')}</div>
+  </div>`;
+}
+
+function screenResult(){
+  const total = S.questions.length || 1;
+  const msg = S.score===total ? 'Perfect run.' : S.score/total>=0.7 ? 'Solid. A few to clean up.' : 'These words need another pass.';
+  const missedWords = Array.from(new Set(S.missed)).map(w=>{ const b=BOOK8.find(x=>x.word===w)||{}; return { word:w, ko:b.en||'' }; });
+  const list = missedWords.length ? missedWords.map(m=>`<div style="padding:14px 16px;background:var(--cream);border-radius:12px;border-left:3px solid var(--red);margin-bottom:10px;"><div class="serif" style="font-weight:700;font-size:17px;color:var(--navy);">${esc(m.word)}</div><div style="font-size:13px;color:var(--sub);margin-top:3px;">${esc(m.ko)}</div></div>`).join('')
+    : `<div style="font-size:14px;color:var(--sub);padding:18px;background:var(--cream);border-radius:12px;">Nothing missed. All answers correct.</div>`;
+  return `<div class="screen" style="background:#FBF8F3;">
+    <div style="background:var(--navy);padding:44px 28px 34px;">
+      <div style="font-size:13px;color:rgba(248,245,240,0.65);letter-spacing:1px;">${esc(S.quizTitle)} · RESULT</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-top:10px;">
+        <div class="serif" style="font-weight:700;font-size:60px;color:#F8F5F0;line-height:1;">${S.score}</div>
+        <div class="serif" style="font-weight:700;font-size:22px;color:rgba(248,245,240,0.55);">/ ${total}</div>
+      </div>
+      <div style="font-size:14px;color:rgba(248,245,240,0.75);margin-top:8px;">${msg}</div>
+    </div>
+    <div class="body" style="padding:22px 24px 20px;">
+      <div class="sectionlbl" style="margin-top:0;">MISSED WORDS</div>
+      ${list}
+    </div>
+    <div style="padding:0 24px 34px;display:flex;gap:10px;">
+      <button class="pill pill-outline" style="flex:1;padding:16px 0;font-size:15px;" onclick="goStats()">See stats</button>
+      <button class="pill pill-primary" style="flex:1;padding:16px 0;font-size:15px;" onclick="goTestHub()">Done</button>
+    </div>
+  </div>`;
+}
+
+function screenStats(){
+  const st = S.stats;
+  const overallAcc = st.total ? Math.round(st.right/st.total*100)+'%' : '—';
+  const typeStats = Object.keys(TYPES).map(k=>{
+    const d = (st.byType||{})[k] || {right:0,total:0};
+    const pct = d.total ? Math.round(d.right/d.total*100) : 0;
+    return { label: d.total?pct+'%':'—', name:TYPES[k].name, color:TYPES[k].color, barH: (d.total? Math.max(pct,4):0) };
+  });
+  const wrongEntries = Object.entries(st.wrong||{}).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxWrong = wrongEntries.length ? wrongEntries[0][1] : 1;
+  const history = (st.history||[]).map(h=>({pct:h.pct, label:h.label, h:Math.max(h.pct,4)}));
+
+  const typeBars = typeStats.map(t=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:8px;">
+      <div style="font-size:12px;font-weight:700;color:var(--navy);">${t.label}</div>
+      <div style="width:100%;background:rgba(42,58,92,0.08);border-radius:6px 6px 0 0;height:74px;flex:none;display:flex;align-items:flex-end;overflow:hidden;"><div style="width:100%;height:${t.barH}%;background:${t.color};border-radius:6px 6px 0 0;"></div></div>
+      <div style="font-size:10.5px;color:var(--sub);text-align:center;line-height:1.3;height:28px;flex:none;">${t.name}</div>
+    </div>`).join('');
+
+  const wrongList = wrongEntries.length ? wrongEntries.map(([w,n])=>`<div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;"><div class="serif" style="font-weight:700;font-size:15px;color:var(--navy);">${esc(w)}</div><div style="font-size:12px;color:var(--sub);">${n}x wrong</div></div>
+      <div style="height:8px;background:rgba(42,58,92,0.08);border-radius:4px;overflow:hidden;"><div style="height:100%;background:var(--red);border-radius:4px;width:${Math.round(n/maxWrong*100)}%;"></div></div>
+    </div>`).join('') : `<div style="font-size:13.5px;color:var(--sub);">No wrong answers recorded yet. Take a test to build your chart.</div>`;
+
+  const histBars = history.length ? history.map(h=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px;">
+      <div style="font-size:10.5px;font-weight:700;color:var(--sub);">${h.pct}%</div>
+      <div style="width:100%;background:rgba(42,58,92,0.08);border-radius:5px 5px 0 0;height:70px;flex:none;display:flex;align-items:flex-end;overflow:hidden;"><div style="width:100%;background:var(--navy);border-radius:5px 5px 0 0;height:${h.h}%;"></div></div>
+      <div style="font-size:9.5px;color:var(--sub);height:14px;flex:none;">${esc(h.label)}</div>
+    </div>`).join('') : `<div style="font-size:13.5px;color:var(--sub);align-self:center;">Your score history will appear here.</div>`;
+
+  return `<div class="screen">
+    <div class="header"><div><div class="htitle">PROGRESS</div><div class="hsub">Where you keep slipping</div></div></div>
+    <div class="body">
+      <div style="display:flex;gap:10px;">
+        <div class="statbox"><div class="statnum">${st.tests||0}</div><div class="statlbl">TESTS TAKEN</div></div>
+        <div class="statbox"><div class="statnum">${overallAcc}</div><div class="statlbl">ACCURACY</div></div>
+        <div class="statbox"><div class="statnum" style="color:var(--orange);">${(st.queue||[]).length}</div><div class="statlbl">IN DRILL</div></div>
+      </div>
+      <div class="sectionlbl">ACCURACY BY QUESTION TYPE</div>
+      <div style="background:var(--card);border-radius:16px;padding:20px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:14px;height:170px;box-sizing:border-box;">${typeBars}</div>
+      <div class="sectionlbl">MOST MISSED WORDS</div>
+      <div style="background:var(--card);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px;">${wrongList}</div>
+      <div class="sectionlbl">RECENT SCORES</div>
+      <div style="background:var(--card);border-radius:16px;padding:20px 18px;display:flex;align-items:flex-end;gap:8px;height:150px;box-sizing:border-box;">${histBars}</div>
+      <button class="pill pill-outline" style="width:100%;margin-top:22px;padding:14px 0;font-size:13.5px;color:var(--sub);" onclick="if(confirm('Reset all progress?'))resetStats()">Reset all progress</button>
+    </div>
+    ${tabbar()}
+  </div>`;
+}
+
+function screenReview(){
+  if (!S.reviewOpen) return '';
+  const active = !!S.rq;
+  let inner;
+  if (active){
+    const opts = optionStyles(S.rq.choices, S.reviewLocked, S.reviewChosen);
+    const canSpeak = S.rq.type==='meaning';
+    inner = `<div style="font-size:13px;color:var(--sub);">${esc(S.rq.instruction)}</div>
+      <div style="display:flex;align-items:center;gap:11px;margin-top:6px;">
+        <div class="serif" style="font-weight:700;font-size:28px;color:var(--navy);line-height:1.25;">${esc(S.rq.prompt)}</div>
+        ${canSpeak?`<button class="speakbtn" style="width:34px;height:34px;" onclick="speak('${esc(S.rq.word)}')">${SPEAK_ICON_D}</button>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px;margin-top:20px;">
+        ${opts.map(o=>`<div class="opt ${o.cls}" style="padding:14px 15px;margin-bottom:0;" onclick="reviewAnswer(${o.id})"><div class="n">${o.num}</div><div class="t" style="font-size:14.5px;">${esc(o.text)}</div></div>`).join('')}
+      </div>
+      <div style="font-size:11.5px;color:var(--sub);margin-top:16px;line-height:1.5;">Get it right and it leaves the queue. Miss it and it moves to the back for later.</div>`;
+  } else {
+    inner = `<div style="padding:14px 0 4px;">
+      <div class="serif" style="font-weight:700;font-size:24px;color:var(--navy);">Drill cleared</div>
+      <div style="font-size:14px;color:var(--sub);margin-top:8px;line-height:1.55;">Five words cleared. ${(S.stats.queue||[]).length} still waiting in the queue.</div>
+      <button class="pill pill-primary" style="width:100%;margin-top:20px;padding:15px 0;font-size:15px;" onclick="closeReview()">Close</button>
+    </div>`;
+  }
+  return `<div class="modal-back center" style="z-index:30;">
+    <div class="popcard">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+        <div style="font-size:11.5px;font-weight:700;letter-spacing:0.9px;color:var(--orange);">WRONG-ANSWER DRILL</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="serif" style="font-weight:700;font-size:14px;color:var(--sub);">${S.reviewCleared} / 5</div>
+          <button style="border:none;background:transparent;cursor:pointer;padding:2px;display:flex;" onclick="closeReview()"><svg width="13" height="13" viewBox="0 0 13 13"><path d="M1 1l11 11M12 1L1 12" stroke="#5B6B87" stroke-width="2" stroke-linecap="round"></path></svg></button>
+        </div>
+      </div>
+      ${inner}
+    </div>
+  </div>`;
+}
+
+/* ============ MAIN RENDER ============ */
+function render(){
+  let html = '';
+  switch(S.screen){
+    case 'home': html = screenHome(); break;
+    case 'sets': html = screenSets(); break;
+    case 'lessons': html = screenLessons(); break;
+    case 'words': html = screenWords(); break;
+    case 'detail': html = screenDetail(); break;
+    case 'testHub': html = screenTestHub(); break;
+    case 'testPick': html = screenTestPick(); break;
+    case 'testType': html = screenTestType(); break;
+    case 'quiz': html = screenQuiz(); break;
+    case 'result': html = screenResult(); break;
+    case 'stats': html = screenStats(); break;
+    default: html = screenHome();
+  }
+  html += screenReview();
+  document.getElementById('phone').innerHTML = html;
+}
+render();
+</script>
+</body>
+</html>
